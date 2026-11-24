@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Filmsuche</title>
+<style>
+:root{--bg:#fbfbf9;--fg:#1d2327;--mut:#68727a;--line:#dcdfe0;--side:#f1f3f2;--ac:#0f6b64;--warn:#b45309;--err:#b42318}
+@media(prefers-color-scheme:dark){:root{--bg:#15191b;--fg:#e6eaea;--mut:#8d989e;--line:#2a3236;--side:#1b2124;--ac:#4cc2b6;--warn:#f0a437;--err:#f97066}}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;display:grid;grid-template-columns:270px 1fr;height:100vh}
+aside{background:var(--side);border-right:1px solid var(--line);padding:16px;overflow:auto}
+main{display:flex;flex-direction:column;min-width:0}
+h2{font-size:13px;margin:18px 0 6px;color:var(--mut);font-weight:600}h2:first-child{margin-top:0}
+label{display:block;padding:2px 0}.srow{display:flex;align-items:center}.srow label{flex:1}
+button,input,select{font:inherit;color:inherit}
+input,select{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%;margin:3px 0}
+input[type=checkbox]{width:auto;margin:0 6px 0 0}
+button{background:var(--ac);color:var(--bg);border:0;border-radius:6px;padding:7px 14px;cursor:pointer;font-weight:600}
+button.x{background:none;color:var(--mut);padding:0 6px;font-size:16px}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+form.top{display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.bar{display:flex;gap:8px}form.top input{font-size:16px;margin:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;padding-top:8px}
+.m{color:var(--mut);font-size:12px}
+#cands,#stat{padding:6px 16px 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{border:1px solid var(--line);border-radius:12px;padding:1px 10px;font-size:12px;color:var(--fg);text-decoration:none;background:none;font-weight:400;cursor:pointer}
+.chip.on{border-color:var(--ac);color:var(--ac)}.chip.err{color:var(--err)}.chip.run{color:var(--mut)}
+#info{padding:8px 16px;color:var(--mut);font-size:13px}
+.wrap{overflow:auto;flex:1}table{border-collapse:collapse;width:100%}
+th{position:sticky;top:0;background:var(--bg);text-align:left;font-weight:600;color:var(--mut);padding:8px 12px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none}
+#th tr+tr th{position:static;cursor:default;padding:0 12px 8px}#th input{margin:0;font-size:13px;padding:4px 6px;min-width:70px}
+td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:hover td{background:var(--side)}td a{color:var(--ac);text-decoration:none}td a:hover{text-decoration:underline}
+tr.sub td:nth-child(2){padding-left:28px;color:var(--mut)}
+.tag{border:1px solid var(--line);border-radius:10px;padding:0 8px;font-size:12px}.w{color:var(--warn)}
+.rel{display:inline-block;width:46px;height:6px;background:var(--line);border-radius:3px;overflow:hidden}.rel i{display:block;height:100%;background:var(--ac)}
+details{margin-top:10px}summary{cursor:pointer;color:var(--ac)}
+@media(max-width:800px){body{grid-template-columns:1fr;height:auto}aside{border-right:0;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<aside>
+  <h2>Dienste für diese Suche</h2>
+  <div id="sv"></div>
+  <details id="sd"><summary id="sdt">Dienst hinzufügen</summary>
+    <form id="add">
+      <input id="n" placeholder="Name" required>
+      <select id="t">
+        <option value="tmdb">Streaminganbieter (via TMDB)</option>
+        <option value="mediathek">Mediathek-Sender</option>
+        <option value="youtube">YouTube</option>
+        <option value="archive">archive.org</option>
+        <option value="ddg">Website per Domain</option>
+        <option value="html">Eigene Such-URL</option>
+        <option value="link">Katalog-Link (Bibliothek)</option>
+      </select>
+      <input id="a"><div class="m" id="hint"></div>
+      <div class="tm"><input id="r" placeholder="Land, z. B. DE" maxlength="2"><label><input type="checkbox" id="so" checked>Nur aktuell streambar</label></div>
+      <input id="o" placeholder="Such-Link zum Öffnen, mit {q} (optional)">
+      <select id="v"><option value="stream">Stream</option><option value="miete">Miete/Kauf online</option><option value="bibliothek">Bibliothek (ausleihbar)</option></select>
+      <button>Speichern</button> <button type="button" class="x" id="cx" hidden>Abbrechen</button>
+    </form>
+  </details>
+  <h2>Verfügbarkeit</h2>
+  <label><input type="checkbox" class="av" value="stream" checked>Stream (sofort)</label>
+  <label><input type="checkbox" class="av" value="miete" checked>Miete/Kauf online</label>
+  <label><input type="checkbox" class="av" value="bibliothek" checked>Bibliothek (ausleihbar)</label>
+  <h2>Treffer eingrenzen</h2>
+  <input id="gq" placeholder="In allen Spalten suchen">
+  <label><input type="checkbox" id="unk" checked>Unbekannte Werte zeigen</label>
+  <label><input type="checkbox" id="grp" checked>Gleiche Filme zusammenfassen</label>
+  <label for="min">Mindestlänge (Min.)</label><input id="min" type="number" min="0" value="60">
+  <label><input type="checkbox" id="hide">Kürzere Treffer ausblenden</label>
+  <label><input type="checkbox" id="sub">Nur mit Untertiteln</label>
+  <div class="m">Spaltenfilter in der Kopfzeile: Text, !Text zum Ausschließen, Zahlen als &gt;90 oder 60-120.</div>
+  <h2>Einstellungen</h2>
+  <label for="key">TMDB-API-Key (bleibt nur in diesem Browser)</label><input id="key" type="password" autocomplete="off">
+  <label for="px">Proxy-URL (Cloudflare Worker, optional)</label><input id="px" placeholder="https://…workers.dev">
+  <button type="button" class="x" id="ex">Dienste exportieren</button>
+  <label class="m">Dienste importieren<input id="im" type="file" accept=".json"></label>
+</aside>
+<main>
+  <form class="top" id="f">
+    <div class="bar"><input id="q" list="hist" placeholder="Filmtitel, z. B. Außer Atem 1960   ( / drücken zum Suchen )" autofocus required><button>Suchen</button></div>
+    <datalist id="hist"></datalist>
+    <details id="adv"><summary>Erweiterte Suche</summary>
+      <div class="grid"><input id="ad" placeholder="Regisseur"><input id="ay" placeholder="Jahr oder 1990-1999"><input id="ac" placeholder="Land, z. B. Frankreich"></div>
+      <div class="m">Auch direkt in der Suchleiste: regie:godard jahr:1960 land:frankreich laenge:&gt;80 sprache:de. Eine Jahreszahl am Ende zählt nur als Hinweis.</div>
+    </details>
+  </form>
+  <div id="cands"></div><div id="stat"></div>
+  <div id="info">Gib einen Titel ein. Mit TMDB-Key erkennt die Suche den Film und sucht auch unter Original- und deutschem Titel.</div>
+  <div class="wrap"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
+</main>
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const ld = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const G = q => 'https://www.google.com/search?q=' + encodeURIComponent(q);
+const AV = {stream: 'Stream', miete: 'Miete/Kauf', bibliothek: 'Bibliothek'};
+const COLS = [['score', 'Relevanz'], ['title', 'Titel'], ['service', 'Dienst'], ['avail', 'Verfügbarkeit'], ['year', 'Jahr'],
+  ['director', 'Regisseur'], ['country', 'Land'], ['minutes', 'Länge (Min.)'], ['lang', 'Sprache'], ['subs', 'Untertitel']];
+const NUM = ['minutes', 'year', 'score'];
+const HINT = {tmdb: 'Anbietername bei TMDB, z. B. MUBI', mediathek: 'Sender, Komma-getrennt, z. B. ZDF,3SAT', youtube: 'Zusatz zur Suche, z. B. full movie',
+  archive: 'Kein Wert nötig', ddg: 'Domain, z. B. ubu.com (braucht Proxy)', html: 'Such-URL mit {q}', link: 'Katalog-URL mit {q}'};
+const D = (id, name, type, arg, avail, extra) => ({id, name, type, arg, avail, region: 'DE', stream_only: true, ...extra});
+const DEF = [
+  D('netflix', 'Netflix', 'tmdb', 'Netflix', 'stream', {open: 'https://www.netflix.com/search?q={q}'}),
+  D('mubi', 'Mubi', 'tmdb', 'MUBI', 'stream'), D('kanopy', 'Kanopy', 'tmdb', 'Kanopy', 'stream'),
+  D('bbc', 'BBC iPlayer', 'tmdb', 'BBC iPlayer', 'stream', {region: 'GB', open: 'https://www.bbc.co.uk/iplayer/search?q={q}'}),
+  D('ard', 'ARD', 'mediathek', 'ARD,BR,HR,MDR,NDR,RBB,SR,SWR,WDR,ONE', 'stream', {open: 'https://www.ardmediathek.de/suche/{q}'}),
+  D('zdf', 'ZDF', 'mediathek', 'ZDF,3SAT', 'stream', {open: 'https://www.zdf.de/suche?q={q}'}),
+  D('arte', 'Arte', 'mediathek', 'ARTE', 'stream', {open: 'https://www.arte.tv/de/search/?q={q}'}),
+  D('youtube', 'YouTube', 'youtube', 'full movie', 'stream', {open: 'https://www.youtube.com/results?search_query={q}'}),
+  D('archive', 'archive.org', 'archive', '', 'stream', {open: 'https://archive.org/search?query={q}'}),
+  D('rarefilmm', 'rarefilmm', 'ddg', 'rarefilmm.com', 'stream', {open: 'https://rarefilmm.com/?s={q}'}),
+  D('ubuweb', 'UbuWeb', 'ddg', 'ubu.com', 'stream'), D('fya', 'Films for Action', 'ddg', 'filmsforaction.org', 'stream'),
+  D('afa', 'Anarchist Film Archive', 'ddg', 'anarchistfilmarchive.org', 'stream'),
+  D('worldcat', 'WorldCat (Bibliotheken)', 'link', 'https://search.worldcat.org/search?q={q}', 'bibliothek')];
+let S = ld('cfg', null) || {services: DEF, key: '', proxy: ''};
+const save = () => sv('cfg', S);
+let rows = [], cands = [], stat = {}, Fq = {}, lastQ = '', raw0 = '', pickId = null, runId = 0, editId = null, sort = {k: 'score', d: -1}, errs = '';
+let off = new Set(ld('off', []));
+
+// ---------- Textwerkzeuge: Normalisierung, Ähnlichkeit (Tippfehler-tolerant) ----------
+const NOISE = /\b(full movie|full film|film|movie|hd|1080p|720p|english subtitles|eng sub|subtitles|trailer|ganzer film)\b/g;
+const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/&/g, ' and ').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+const clean = s => norm(s).replace(/\b(19|20)\d\d\b/g, ' ').replace(NOISE, ' ').replace(/\s+/g, ' ').trim();
+const bi = s => { const m = new Map(); for (let i = 0; i < s.length - 1; i++) { const g = s.slice(i, i + 2); m.set(g, (m.get(g) || 0) + 1); } return m; };
+function dice(a, b) {
+  if (a === b) return 1; if (a.length < 2 || b.length < 2) return 0;
+  const A = bi(a), B = bi(b); let n = 0; for (const [g, c] of A) n += Math.min(c, B.get(g) || 0);
+  return 2 * n / (a.length + b.length - 2);
+}
+function simOf(r, c) {
+  const t = clean(r.title), tt = t.split(' ').filter(Boolean); let best = 0;
+  for (const v of c.variants) {
+    const q = clean(v), tk = q.split(' ').filter(Boolean);
+    const cov = tk.filter(w => tt.some(x => x === w || x.startsWith(w))).length / (tk.length || 1);
+    best = Math.max(best, dice(t, q), Math.max(0, cov * .85 - .04 * Math.max(0, tt.length - tk.length - 1)));
+  }
+  return best;
+}
+function score(r, c, sim) {
+  if (r.link) return 35;
+  let sc = sim * 100; const wy = c.pick ? c.pick.year : (c.F.ysoft ? +c.F.y : null);
+  if (r.year && wy) sc += Math.abs(r.year - wy) <= 1 ? 12 : -25;
+  if (r.minutes != null) sc += r.minutes < 40 ? -35 : r.minutes < 70 ? -12 : 6;   // Trailer/Kurzes nach unten
+  sc += {stream: 8, miete: 3, bibliothek: 0}[r.avail] || 0; if (r.subs) sc += 4;
+  return Math.max(0, Math.min(100, Math.round(sc)));
+}
+
+// ---------- Suchsyntax: regie: jahr: land: laenge: sprache: ----------
+function parseQ(raw) {
+  const ops = {regie: 'd', director: 'd', jahr: 'y', year: 'y', land: 'c', country: 'c', laenge: 'len', 'länge': 'len', sprache: 'l', lang: 'l'}, F = {};
+  let t = raw.replace(/([\wäö]+):("([^"]*)"|\S+)/g, (m, k, v, q) => ops[k.toLowerCase()] ? (F[ops[k.toLowerCase()]] = q ?? v, ' ') : m);
+  t = t.replace(/\s+/g, ' ').trim();
+  const y = t.match(/^(.+?)[\s(]+((?:19|20)\d\d)\)?$/);
+  if (!F.y && y && +y[2] <= 2026) { t = y[1].trim(); F.y = y[2]; F.ysoft = true; }
+  return {text: t, F};
+}
+
+// ---------- Netzwerk: direkt, sonst über optionalen Proxy ----------
+async function fx(url, opt = {}, force) {
+  const px = S.proxy && S.proxy.replace(/\/$/, '') + '/?u=';
+  const go = async u => { const r = await fetch(u, opt); if (!r.ok) { const e = new Error('HTTP ' + r.status); e.http = 1; throw e; } return r.text(); };
+  if (!force) try { return await go(url); } catch (e) { if (e.http) throw e; if (!px) throw new Error('Vom Browser blockiert (CORS), Proxy nötig'); }
+  if (!px) throw new Error('Proxy nötig (Einstellungen)');
+  return go(px + encodeURIComponent(url));
+}
+const tj = (p, q = '') => fx(`https://api.themoviedb.org/3${p}?api_key=${S.key}&language=de-DE${q}`).then(JSON.parse);
+const reg = new Intl.DisplayNames(['de'], {type: 'region'}), regEn = new Intl.DisplayNames(['en'], {type: 'region'});
+const yr = F => { const m = (F.y || '').match(/^(\d{4})(?:-(\d{4}))?$/); return m ? [+m[1], +(m[2] || m[1])] : null; };
+const vs = c => c.variants.slice(0, 2);
+const mins = t => { const p = (t || '').split(':').map(Number); return p.length && !p.some(isNaN) ? Math.round(p.reduce((a, x) => a * 60 + x, 0) / 60) : null; };
+const parseHtml = h => new DOMParser().parseFromString(h, 'text/html');
+
+// ---------- Adapter ----------
+const A = {
+  async tmdb(s, c) {
+    if (!S.key) throw new Error('TMDB-Key fehlt (Einstellungen)');
+    c.td ??= Promise.all((c.pick ? [c.pick] : cands.slice(0, 3)).map(m => tj('/movie/' + m.id, '&append_to_response=credits,watch/providers')));
+    const out = [], kinds = s.stream_only !== false ? [['flatrate', 'stream']] : [['flatrate', 'stream'], ['rent', 'miete'], ['buy', 'miete']];
+    for (const d of await c.td) {
+      const p = d['watch/providers']?.results?.[s.region || 'DE'] || {};
+      for (const [k, avail] of kinds) if ((p[k] || []).some(x => x.provider_name.toLowerCase().includes(s.arg.toLowerCase())))
+        out.push({title: d.title, url: p.link || 'https://www.themoviedb.org/movie/' + d.id, avail, minutes: d.runtime || null, lang: d.original_language,
+          year: d.release_date ? +d.release_date.slice(0, 4) : null, note: d.original_title !== d.title ? d.original_title : null,
+          director: (d.credits?.crew || []).filter(x => x.job === 'Director').map(x => x.name).join(', ') || null,
+          country: (d.production_countries || []).map(x => reg.of(x.iso_3166_1)).join(', ') || null,
+          cx: (d.production_countries || []).map(x => x.iso_3166_1 + ' ' + regEn.of(x.iso_3166_1)).join(' ')});
+    }
+    return out;
+  },
+  async mediathek(s, c) {
+    const ch = s.arg.split(',').map(x => x.trim().toUpperCase());
+    const res = await Promise.all(vs(c).map(async v => JSON.parse(await fx('https://mediathekviewweb.de/api/query', {method: 'POST', headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify({queries: [{fields: ['title', 'topic'], query: v}], sortBy: 'timestamp', sortOrder: 'desc', future: false, offset: 0, size: 80})})).result.results));
+    return res.flat().filter(r => ch.some(x => r.channel.toUpperCase().startsWith(x))).slice(0, 20).map(r => ({title: r.title, url: r.url_website || r.url_video,
+      minutes: r.duration ? Math.round(r.duration / 60) : null, lang: r.channel.includes('.') ? r.channel.split('.').pop().toLowerCase() : 'de',
+      subs: !!r.url_subtitle, sub_url: r.url_subtitle, note: r.channel}));
+  },
+  async archive(s, c) {
+    const y = !c.F.ysoft && yr(c.F);
+    const res = await Promise.all(vs(c).map(async v => {
+      const q = `title:(${v}) AND mediatype:movies` + (c.F.d ? ` AND creator:(${c.F.d})` : '') + (y ? ` AND year:[${y[0]} TO ${y[1]}]` : '');
+      const u = 'https://archive.org/advancedsearch.php?' + new URLSearchParams([['q', q], ['rows', 10], ['output', 'json'], ...['identifier', 'title', 'language', 'year', 'creator'].map(x => ['fl[]', x])]);
+      return Promise.all(JSON.parse(await fx(u)).response.docs.map(async d => {
+        const r = {title: d.title, url: 'https://archive.org/details/' + d.identifier, lang: typeof d.language === 'string' ? d.language : null,
+          year: /^\d{4}$/.test(d.year) ? +d.year : null, director: typeof d.creator === 'string' ? d.creator : null};
+        try {
+          const f = JSON.parse(await fx('https://archive.org/metadata/' + d.identifier)).files || [], L = f.map(x => +x.length).filter(n => n > 0);
+          r.minutes = L.length ? Math.round(Math.max(...L) / 60) : null; r.subs = f.some(x => /\.(srt|vtt)$/i.test(x.name));
+        } catch {}
+        return r;
+      }));
+    }));
+    return res.flat(2);
+  },
+  async youtube(s, c) {
+    const res = await Promise.all(vs(c).map(async v => {
+      const h = await fx('https://www.youtube.com/results?search_query=' + encodeURIComponent([v, c.F.d, s.arg].filter(Boolean).join(' ')) + '&sp=EgIQAQ%3D%3D', {}, true);
+      const data = JSON.parse(h.match(/ytInitialData\s*=\s*(\{.*?\});\s*<\/script>/s)[1]), vids = [];
+      (function w(o) { if (o && typeof o === 'object') { if (o.videoRenderer) vids.push(o.videoRenderer); else Object.values(o).forEach(w); } })(data);
+      return vids.slice(0, 12).map(x => ({title: x.title.runs[0].text, url: 'https://www.youtube.com/watch?v=' + x.videoId, minutes: mins(x.lengthText?.simpleText), note: x.ownerText?.runs?.[0]?.text}));
+    }));
+    return res.flat();
+  },
+  async ddg(s, c) {
+    const res = await Promise.all(vs(c).map(async v => {
+      const h = await fx('https://html.duckduckgo.com/html/?q=' + encodeURIComponent(`site:${s.arg} ${v} ${c.F.d || ''}`), {}, true);
+      return [...parseHtml(h).querySelectorAll('a.result__a')].slice(0, 8).map(a => ({title: a.textContent.trim(), url: new URL(a.getAttribute('href'), 'https://duckduckgo.com').searchParams.get('uddg') || a.href}));
+    }));
+    return res.flat();
+  },
+  async html(s, c) {
+    const url = s.arg.replace('{q}', encodeURIComponent(c.q)), tk = norm(c.q).split(' ');
+    return [...parseHtml(await fx(url)).querySelectorAll('a[href]')].map(a => ({title: a.textContent.trim(), url: new URL(a.getAttribute('href'), url).href}))
+      .filter(r => r.title && tk.every(w => norm(r.title).includes(w))).slice(0, 10);
+  },
+  async link(s, c) { return [{title: 'Katalog durchsuchen: ' + c.q, url: s.arg.replace('{q}', encodeURIComponent(c.q)), note: 'Bestand manuell prüfen', link: true}]; }
+};
+const openUrl = (s, q) => (s.open || (s.type === 'ddg' ? G(`site:${s.arg} {q}`) : s.type === 'html' || s.type === 'link' ? s.arg : G(s.name + ' {q}'))).replace('{q}', s.open || s.type === 'html' || s.type === 'link' ? encodeURIComponent(q) : q);
+
+// ---------- Suchablauf: Film erkennen, alle Dienste parallel, Ergebnisse live ----------
+async function go(raw, pick) {
+  raw0 = raw; pickId = pick || null;
+  const extra = [['ad', 'regie'], ['ay', 'jahr'], ['ac', 'land']].map(([i, k]) => $('#' + i).value.trim() ? `${k}:"${$('#' + i).value.trim()}"` : '').join(' ');
+  const {text, F} = parseQ(raw + ' ' + extra); if (!text) return;
+  const ids = $$('.sc:checked').map(x => x.value), sel = S.services.filter(s => ids.includes(s.id));
+  if (!ids.length) { $('#info').textContent = 'Wähle mindestens einen Dienst aus.'; return; }
+  const my = ++runId; rows = []; cands = []; stat = {}; Fq = F; lastQ = text; errs = '';
+  history.replaceState(null, '', '#q=' + encodeURIComponent(raw));
+  const h = [raw, ...ld('hist', []).filter(x => x !== raw)].slice(0, 20); sv('hist', h); $('#hist').innerHTML = h.map(x => `<option value="${esc(x)}">`).join('');
+  const c = {q: text, F, variants: [text], pick: null};
+  $('#info').textContent = 'Suche läuft …'; render(); drawStat();
+  if (S.key) try {
+    const y = yr(F), r = await tj('/search/movie', '&query=' + encodeURIComponent(text) + (y && y[0] === y[1] ? '&year=' + y[0] : ''));
+    cands = r.results.slice(0, 5).map(m => ({id: m.id, title: m.title, original_title: m.original_title, year: m.release_date ? +m.release_date.slice(0, 4) : null}));
+    const p = pick ? cands.find(x => x.id == pick) : cands[0];
+    if (p && (pick || Math.max(dice(norm(text), norm(p.title)), dice(norm(text), norm(p.original_title))) > .5)) {
+      c.pick = p; c.variants = [...new Set([text, p.title, p.original_title])].slice(0, 3);
+    }
+  } catch (e) { errs = `TMDB: ${esc(e.message)}`; }
+  if (my !== runId) return; drawCands(c);
+  sel.forEach(async s => {
+    stat[s.id] = {s, st: 'run'}; drawStat();
+    try { const out = await A[s.type](s, c); if (my !== runId) return; add(s, out, c); stat[s.id] = {s, st: 'ok', n: out.length}; }
+    catch (e) { if (my !== runId) return; stat[s.id] = {s, st: 'err', msg: e.message}; }
+    drawStat();
+  });
+}
+function add(s, out, c) {
+  for (let r of out) {
+    const m = r.title.match(/\b(19\d\d|20\d\d)\b/);
+    r = {minutes: null, lang: null, subs: null, sub_url: null, note: null, director: null, country: null, cx: '', year: m ? +m[1] : null, avail: s.avail, ...r, service: s.name};
+    const sim = r.link ? 0 : simOf(r, c); r.score = score(r, c, sim);
+    r.gk = r.link ? 'zz-' + s.id : (c.pick && sim >= .8 ? clean(c.pick.title) : clean(r.title));
+    rows.push(r);
+  }
+  render();
+}
+function drawCands(c) {
+  $('#cands').innerHTML = cands.length > 1 ? '<span class="m">Meintest du:</span>' + cands.map(x =>
+    `<button class="chip ${c.pick?.id === x.id ? 'on' : ''}" data-id="${x.id}">${esc(x.title)}${x.year ? ' (' + x.year + ')' : ''}</button>`).join('') : '';
+}
+function drawStat() {
+  $('#stat').innerHTML = Object.values(stat).map(({s, st, n, msg}) =>
+    `<a class="chip ${st}" href="${esc(openUrl(s, lastQ))}" target="_blank" rel="noopener" title="${esc(msg || 'Auf der Seite selbst suchen')}">${esc(s.name)} ${st === 'ok' ? n : st === 'run' ? '…' : '✗ ' + esc(msg)} ↗</a>`).join('');
+}
+
+// ---------- Tabelle ----------
+function match(x, k, f) {
+  f = f.trim().toLowerCase(); if (!f) return true;
+  const v = k === 'country' && x.country ? x.country + ' ' + x.cx : x[k];
+  if (v == null || v === '') return $('#unk').checked;
+  if (NUM.includes(k)) {
+    const n = +v; let m;
+    if (m = f.match(/^(\d+)\s*-\s*(\d+)$/)) return n >= +m[1] && n <= +m[2];
+    if (m = f.match(/^([<>]=?)\s*(\d+)$/)) { const t = +m[2]; return m[1] === '>' ? n > t : m[1] === '>=' ? n >= t : m[1] === '<' ? n < t : n <= t; }
+    return String(n).includes(f);
+  }
+  const s = (k === 'subs' ? (v ? 'ja' : 'nein') : k === 'avail' ? AV[v] : String(v)).toLowerCase();
+  return f.startsWith('!') ? !s.includes(f.slice(1)) : s.includes(f);
+}
+function action(x) {
+  if (x.avail === 'bibliothek') return '';
+  if (x.sub_url) return `<a href="${esc(x.sub_url)}" target="_blank" rel="noopener">Untertitel laden</a>`;
+  if (x.subs !== true) return `<a href="https://www.opensubtitles.org/en/search/sublanguageid-eng/moviename-${encodeURIComponent(lastQ)}" target="_blank" rel="noopener">EN-Untertitel suchen</a>`;
+  return '';
+}
+function render() {
+  const av = $$('.av:checked').map(x => x.value), min = +$('#min').value || 0, g = $('#gq').value.toLowerCase().trim();
+  const H = [['director', Fq.d], ['country', Fq.c], ['year', Fq.ysoft ? '' : Fq.y], ['minutes', Fq.len], ['lang', Fq.l]].filter(x => x[1]);
+  const fs = [...$$('[data-f]').map(i => [i.dataset.f, i.value]).filter(x => x[1].trim()), ...H];
+  let r = rows.filter(x => av.includes(x.avail) && (!$('#sub').checked || x.subs) && !($('#hide').checked && min && x.minutes != null && x.minutes < min) &&
+    (!g || [x.service, x.title, x.director, x.country, x.lang, x.note].join(' ').toLowerCase().includes(g)) && fs.every(([k, f]) => match(x, k, f)));
+  const grp = $('#grp').checked && sort.k === 'score' && sort.d < 0;
+  if (grp) { const mx = {}; r.forEach(x => mx[x.gk] = Math.max(mx[x.gk] || 0, x.score)); r.sort((a, b) => mx[b.gk] - mx[a.gk] || (a.gk > b.gk ? 1 : a.gk < b.gk ? -1 : 0) || b.score - a.score); }
+  else r.sort((a, b) => { const A = a[sort.k] ?? '', B = b[sort.k] ?? ''; return (A > B ? 1 : A < B ? -1 : 0) * sort.d; });
+  let prev; const mn = min;
+  $('#tb').innerHTML = r.map(x => {
+    const sub = grp && x.gk === prev; prev = x.gk;
+    return `<tr class="${sub ? 'sub' : ''}"><td><span class="rel" title="Relevanz ${x.score}"><i style="width:${x.score}%"></i></span></td>` +
+      `<td><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.note ? `<div class="m">${esc(x.note)}</div>` : ''}</td><td>${esc(x.service)}</td>` +
+      `<td><span class="tag">${AV[x.avail] || esc(x.avail)}</span></td><td>${x.year ?? '?'}</td><td>${esc(x.director || '?')}</td><td>${esc(x.country || '?')}</td>` +
+      `<td>${x.minutes ?? '?'}${mn && x.minutes != null && x.minutes < mn ? ' <span class="w" title="Kürzer als die Mindestlänge, evtl. Trailer">kurz</span>' : ''}</td>` +
+      `<td>${esc(x.lang || '?')}</td><td>${x.subs ? 'ja' : x.subs === false ? 'nein' : '?'}</td><td>${action(x)}</td></tr>`;
+  }).join('');
+  const pending = Object.values(stat).some(x => x.st === 'run');
+  $('#info').innerHTML = `${r.length} von ${rows.length} Treffern für „${esc(lastQ)}“${pending ? ' (weitere Dienste laufen noch)' : ''}` +
+    (errs ? ` <span style="color:var(--err)">${errs}</span>` : '') + (!S.key ? ' · Tipp: Mit TMDB-Key wird der Film genauer erkannt.' : '');
+}
+
+// ---------- Dienste verwalten, Einstellungen ----------
+function typeUI() {
+  const t = $('#t').value; $('#hint').textContent = HINT[t]; $('#a').placeholder = HINT[t]; $('#a').disabled = t === 'archive';
+  $$('.tm').forEach(x => x.hidden = t !== 'tmdb');
+}
+function fillForm(s) {
+  editId = s?.id || null; $('#n').value = s?.name || ''; $('#t').value = s?.type || 'ddg'; $('#a').value = s?.arg || ''; $('#r').value = s?.region || 'DE';
+  $('#so').checked = s ? s.stream_only !== false : true; $('#v').value = s?.avail || 'stream'; $('#o').value = s?.open || '';
+  $('#sdt').textContent = s ? 'Dienst bearbeiten: ' + s.name : 'Dienst hinzufügen'; $('#cx').hidden = !s; $('#sd').open = !!s; typeUI();
+}
+function drawServices() {
+  $('#sv').innerHTML = S.services.map(s => `<div class="srow"><label><input type="checkbox" class="sc" value="${esc(s.id)}" ${off.has(s.id) ? '' : 'checked'}>${esc(s.name)}</label>` +
+    `<button class="x" data-a="edit" data-id="${esc(s.id)}" aria-label="${esc(s.name)} bearbeiten" title="Bearbeiten">✎</button>` +
+    `<button class="x" data-a="del" data-id="${esc(s.id)}" aria-label="${esc(s.name)} entfernen" title="Entfernen">×</button></div>`).join('');
+}
+$('#sv').addEventListener('change', e => { if (!e.target.classList.contains('sc')) return; e.target.checked ? off.delete(e.target.value) : off.add(e.target.value); sv('off', [...off]); });
+$('#sv').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return; const s = S.services.find(x => x.id === b.dataset.id);
+  if (b.dataset.a === 'edit') fillForm(s);
+  else if (confirm(s.name + ' entfernen?')) { S.services = S.services.filter(x => x.id !== s.id); if (editId === s.id) fillForm(null); save(); drawServices(); }
+});
+$('#t').addEventListener('change', typeUI); $('#cx').addEventListener('click', () => fillForm(null));
+$('#add').addEventListener('submit', e => {
+  e.preventDefault();
+  const o = {name: $('#n').value.trim(), type: $('#t').value, arg: $('#a').value.trim(), avail: $('#v').value, region: ($('#r').value || 'DE').toUpperCase(), stream_only: $('#so').checked, open: $('#o').value.trim()};
+  if (editId) S.services = S.services.map(s => s.id === editId ? {...s, ...o} : s);
+  else S.services.push({id: o.name.toLowerCase().replace(/\W+/g, '') + Date.now().toString(36), ...o});
+  save(); fillForm(null); drawServices();
+});
+$('#key').value = S.key; $('#px').value = S.proxy;
+$('#key').addEventListener('change', e => { S.key = e.target.value.trim(); save(); });
+$('#px').addEventListener('change', e => { S.proxy = e.target.value.trim(); save(); });
+$('#ex').addEventListener('click', () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S.services, null, 2)], {type: 'application/json'})); a.download = 'filmsuche-dienste.json'; a.click(); });
+$('#im').addEventListener('change', async e => { try { S.services = JSON.parse(await e.target.files[0].text()); save(); drawServices(); } catch { alert('Die Datei ist keine gültige Dienste-Liste.'); } });
+
+$('#th').innerHTML = '<tr>' + COLS.map(([k, l]) => `<th data-k="${k}">${l}</th>`).join('') + '<th>Aktion</th></tr><tr>' +
+  COLS.map(([k, l]) => `<th><input data-f="${k}" placeholder="Filter" aria-label="Filter: ${l}"></th>`).join('') + '<th></th></tr>';
+$('#th').addEventListener('click', e => { const k = e.target.dataset.k; if (!k) return; sort = {k, d: sort.k === k ? -sort.d : (k === 'score' ? -1 : 1)}; render(); });
+$('#cands').addEventListener('click', e => { const id = e.target.dataset.id; if (id) go(raw0, id); });
+$('#f').addEventListener('submit', e => { e.preventDefault(); go($('#q').value.trim()); });
+$$('.av,#min,#hide,#sub,#gq,#unk,#grp,[data-f]').forEach(el => el.addEventListener('input', render));
+document.addEventListener('keydown', e => { if (e.key === '/' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); $('#q').focus(); } });
+$('#hist').innerHTML = ld('hist', []).map(x => `<option value="${esc(x)}">`).join('');
+drawServices(); typeUI();
+const hm = location.hash.match(/q=([^&]+)/); if (hm) { $('#q').value = decodeURIComponent(hm[1]); go($('#q').value); }
+</script>
+</body>
+</html>
