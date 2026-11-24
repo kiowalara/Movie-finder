@@ -5,80 +5,102 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Filmsuche</title>
 <style>
-:root{--bg:#fbfbf9;--fg:#1d2327;--mut:#68727a;--line:#dcdfe0;--side:#f1f3f2;--ac:#0f6b64;--warn:#b45309;--err:#b42318}
-@media(prefers-color-scheme:dark){:root{--bg:#15191b;--fg:#e6eaea;--mut:#8d989e;--line:#2a3236;--side:#1b2124;--ac:#4cc2b6;--warn:#f0a437;--err:#f97066}}
+:root{--bg:#f4f2ec;--panel:#fffefb;--fg:#1f2428;--mut:#69727a;--line:#ddd9ce;--side:#e9e6dd;--dot:rgba(0,0,0,.09);
+--c1:#0e7c72;--c2:#2f6fdb;--c3:#7a4fd3;--c4:#bf7a05;--c5:#5b6670;--ok:#1f8a4c;--warn:#b45309;--err:#b42318;
+--grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.1'/%3E%3C/svg%3E")}
+@media(prefers-color-scheme:dark){:root{--bg:#121618;--panel:#1b2124;--fg:#e6eaea;--mut:#8d989e;--line:#2c3539;--side:#171c1e;--dot:rgba(255,255,255,.07);
+--c1:#4cc2b6;--c2:#7aa7ff;--c3:#b69cff;--c4:#f0a437;--c5:#9aa6ae;--ok:#4cc58a;--warn:#f0a437;--err:#f97066}}
 *{box-sizing:border-box}[hidden]{display:none!important}
-body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;display:grid;grid-template-columns:270px 1fr;height:100vh}
-aside{background:var(--side);border-right:1px solid var(--line);padding:16px;overflow:auto}
-main{display:flex;flex-direction:column;min-width:0}
-h2{font-size:13px;margin:18px 0 6px;color:var(--mut);font-weight:600}h2:first-child{margin-top:0}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;display:grid;grid-template-columns:310px 1fr;height:100vh}
+aside{background-color:var(--side);background-image:var(--grain);border-right:1px solid var(--line);padding:12px;overflow:auto}
+main{display:flex;flex-direction:column;min-width:0;height:100vh;overflow:hidden}
+.card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--cc);border-radius:10px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.card>summary{padding:9px 12px;font-weight:700;cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;background:color-mix(in srgb,var(--cc) 11%,var(--panel))}
+.card>summary::-webkit-details-marker{display:none}
+.card>summary::after{content:'▾';margin-left:auto;color:var(--cc);transition:transform .15s}
+.card:not([open])>summary::after{transform:rotate(-90deg)}
+.body{padding:10px 12px}
+.group{border:1px dashed var(--c3);border-radius:8px;padding:8px 10px;margin:8px 0;background:color-mix(in srgb,var(--c3) 7%,transparent)}
+.group>b{font-size:12px;color:var(--c3)}
 label{display:block;padding:2px 0}.srow{display:flex;align-items:center}.srow label{flex:1}
+.m{color:var(--mut);font-size:12px}
 button,input,select{font:inherit;color:inherit}
-input,select{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%;margin:3px 0}
+input,select{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%;margin:3px 0}
 input[type=checkbox]{width:auto;margin:0 6px 0 0}
-button{background:var(--ac);color:var(--bg);border:0;border-radius:6px;padding:7px 14px;cursor:pointer;font-weight:600}
-button.x{background:none;color:var(--mut);padding:0 6px;font-size:16px}
-:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
-form.top{display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-bottom:1px solid var(--line)}
+button{background:var(--c1);color:var(--bg);border:0;border-radius:6px;padding:7px 14px;cursor:pointer;font-weight:600}
+button.ghost{background:none;color:var(--fg);border:1px solid var(--line);padding:4px 10px;font-weight:500}
+button.wide{width:100%;margin-bottom:8px}
+button.x{background:none;color:var(--mut);padding:0 6px;font-size:16px}button.x:disabled{opacity:.25;cursor:default}
+button.q{width:18px;height:18px;border-radius:50%;border:1px solid var(--mut);background:none;color:var(--mut);font-size:11px;padding:0;font-weight:700;margin-left:6px}
+:focus-visible{outline:2px solid var(--c1);outline-offset:2px}
+form.top{display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-bottom:1px solid var(--line);background-color:var(--panel);background-image:radial-gradient(var(--dot) 1px,transparent 1px);background-size:14px 14px}
 .bar{display:flex;gap:8px}form.top input{font-size:16px;margin:0}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;padding-top:8px}
-.m{color:var(--mut);font-size:12px}
-#cands,#stat{padding:6px 16px 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.chip{border:1px solid var(--line);border-radius:12px;padding:1px 10px;font-size:12px;color:var(--fg);text-decoration:none;background:none;font-weight:400;cursor:pointer}
-.chip.on{border-color:var(--ac);color:var(--ac)}.chip.err{color:var(--err)}.chip.run{color:var(--mut)}
-#info{padding:8px 16px;color:var(--mut);font-size:13px}
+details summary{cursor:pointer}form.top summary{color:var(--c1)}
+.strip{display:flex;gap:10px;align-items:center;padding:7px 16px;border-bottom:1px solid var(--line)}
+.strip .lab{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);min-width:78px;font-weight:700}
+.strip div{display:flex;flex-wrap:wrap;gap:6px}
+#cw{background:color-mix(in srgb,var(--c3) 9%,var(--bg))}#sw{background:color-mix(in srgb,var(--c1) 5%,var(--bg))}
+.sug{border-radius:999px;padding:5px 14px;background:color-mix(in srgb,var(--c3) 17%,var(--panel));color:var(--c3);font-weight:700}
+.sug.on{background:var(--c3);color:var(--bg)}
+.svc{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);background:var(--panel);border-radius:5px;padding:2px 9px;font-size:12px;color:var(--fg);text-decoration:none}
+.svc .dot{width:8px;height:8px;border-radius:50%;background:var(--mut)}.svc.hit .dot{background:var(--ok)}.svc.err .dot{background:var(--err)}
+.svc.run .dot{background:var(--c4);animation:p 1s infinite}@keyframes p{50%{opacity:.25}}
+.svc.err{color:var(--err)}.svc b{font-variant-numeric:tabular-nums}
+.res{margin:12px 16px 16px;border:1px solid var(--line);border-radius:10px;background:var(--panel);display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+.tools{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--c1) 6%,var(--panel));flex-wrap:wrap}
+.tools .sp{flex:1}
 .wrap{overflow:auto;flex:1}table{border-collapse:collapse;width:100%}
-th{position:sticky;top:0;background:var(--bg);text-align:left;font-weight:600;color:var(--mut);padding:8px 12px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none}
-#th tr+tr th{position:static;cursor:default;padding:0 12px 8px}#th input{margin:0;font-size:13px;padding:4px 6px;min-width:70px}
+th{position:sticky;top:0;background:var(--panel);text-align:left;font-weight:600;color:var(--mut);padding:8px 12px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none;z-index:1}
+th.sorted{color:var(--fg);font-weight:800;background:color-mix(in srgb,var(--c1) 10%,var(--panel));box-shadow:inset 0 -2px var(--c1)}
+.ar{color:var(--c1);margin-left:5px}
+#th tr+tr th{position:static;cursor:default;padding:0 12px 8px;background:var(--panel)}#th input{margin:0;font-size:13px;padding:4px 6px;min-width:70px}
+.ck{width:34px;padding-right:0!important}
 td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
-tr:hover td{background:var(--side)}td a{color:var(--ac);text-decoration:none}td a:hover{text-decoration:underline}
-tr.sub td:nth-child(2){padding-left:28px;color:var(--mut)}
-.tag{border:1px solid var(--line);border-radius:10px;padding:0 8px;font-size:12px}.w{color:var(--warn)}
-.rel{display:inline-block;width:46px;height:6px;background:var(--line);border-radius:3px;overflow:hidden}.rel i{display:block;height:100%;background:var(--ac)}
-details{margin-top:10px}summary{cursor:pointer;color:var(--ac)}
-@media(max-width:800px){body{grid-template-columns:1fr;height:auto}aside{border-right:0;border-bottom:1px solid var(--line)}}
+tr:hover td{background:color-mix(in srgb,var(--c1) 5%,var(--panel))}tr.sel td{background:color-mix(in srgb,var(--c2) 11%,var(--panel))}
+td a{color:var(--c1);text-decoration:none;font-weight:500}td a:hover{text-decoration:underline}
+tr.sub td[data-c=title]{padding-left:28px;color:var(--mut)}
+.tag{border-radius:6px;padding:1px 8px;font-size:12px;font-weight:600;color:var(--t,var(--mut));background:color-mix(in srgb,var(--t,var(--mut)) 15%,transparent)}
+.av-stream{--t:var(--ok)}.av-miete{--t:var(--c4)}.av-bibliothek{--t:var(--c3)}.w{color:var(--warn)}
+.rel{display:inline-block;width:46px;height:6px;background:var(--line);border-radius:3px;overflow:hidden;vertical-align:middle}.rel i{display:block;height:100%;background:var(--c1)}
+.pop{position:fixed;z-index:30;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;box-shadow:0 8px 28px rgba(0,0,0,.25);font-size:13px}
+.pop ul{margin:6px 0 0;padding-left:18px}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--fg);width:min(420px,92vw);padding:18px}
+dialog::backdrop{background:rgba(0,0,0,.4)}dialog h3{margin:0 0 8px}
+@media(max-width:800px){body{grid-template-columns:1fr;height:auto}main{height:auto;overflow:visible}aside{border-right:0;border-bottom:1px solid var(--line)}}
 </style>
 </head>
 <body>
 <aside>
-  <h2>Dienste für diese Suche</h2>
-  <div id="sv"></div>
-  <details id="sd"><summary id="sdt">Dienst hinzufügen</summary>
-    <form id="add">
-      <input id="n" placeholder="Name" required>
-      <select id="t">
-        <option value="tmdb">Streaminganbieter (via TMDB)</option>
-        <option value="mediathek">Mediathek-Sender</option>
-        <option value="youtube">YouTube</option>
-        <option value="archive">archive.org</option>
-        <option value="ddg">Website per Domain</option>
-        <option value="html">Eigene Such-URL</option>
-        <option value="link">Katalog-Link (Bibliothek)</option>
-      </select>
-      <input id="a"><div class="m" id="hint"></div>
-      <div class="tm"><input id="r" placeholder="Land, z. B. DE" maxlength="2"><label><input type="checkbox" id="so" checked>Nur aktuell streambar</label></div>
-      <input id="o" placeholder="Such-Link zum Öffnen, mit {q} (optional)">
-      <select id="v"><option value="stream">Stream</option><option value="miete">Miete/Kauf online</option><option value="bibliothek">Bibliothek (ausleihbar)</option></select>
-      <button>Speichern</button> <button type="button" class="x" id="cx" hidden>Abbrechen</button>
-    </form>
-  </details>
-  <h2>Verfügbarkeit</h2>
-  <label><input type="checkbox" class="av" value="stream" checked>Stream (sofort)</label>
-  <label><input type="checkbox" class="av" value="miete" checked>Miete/Kauf online</label>
-  <label><input type="checkbox" class="av" value="bibliothek" checked>Bibliothek (ausleihbar)</label>
-  <h2>Treffer eingrenzen</h2>
-  <input id="gq" placeholder="In allen Spalten suchen">
-  <label><input type="checkbox" id="unk" checked>Unbekannte Werte zeigen</label>
-  <label><input type="checkbox" id="grp" checked>Gleiche Filme zusammenfassen</label>
-  <label for="min">Mindestlänge (Min.)</label><input id="min" type="number" min="0" value="60">
-  <label><input type="checkbox" id="hide">Kürzere Treffer ausblenden</label>
-  <label><input type="checkbox" id="sub">Nur mit Untertiteln</label>
-  <div class="m">Spaltenfilter in der Kopfzeile: Text, !Text zum Ausschließen, Zahlen als &gt;90 oder 60-120.</div>
-  <h2>Einstellungen</h2>
-  <label for="key">TMDB-API-Key (bleibt nur in diesem Browser)</label><input id="key" type="password" autocomplete="off">
-  <label for="px">Proxy-URL (Cloudflare Worker, optional)</label><input id="px" placeholder="https://…workers.dev">
-  <button type="button" class="x" id="ex">Dienste exportieren</button>
-  <label class="m">Dienste importieren<input id="im" type="file" accept=".json"></label>
+  <details class="card" style="--cc:var(--c1)" open><summary>Dienste</summary><div class="body">
+    <button type="button" class="wide" id="addbtn">+ Dienst hinzufügen</button>
+    <div id="sv"></div>
+  </div></details>
+  <details class="card" style="--cc:var(--c2)" open><summary>Verfügbarkeit</summary><div class="body">
+    <label><input type="checkbox" class="av" value="stream" checked><span class="tag av-stream">Stream</span> sofort ansehbar</label>
+    <label><input type="checkbox" class="av" value="miete" checked><span class="tag av-miete">Miete/Kauf</span> online</label>
+    <label><input type="checkbox" class="av" value="bibliothek" checked><span class="tag av-bibliothek">Bibliothek</span> ausleihbar</label>
+  </div></details>
+  <details class="card" style="--cc:var(--c3)" open><summary>Treffer eingrenzen<button type="button" class="q" data-help="filter" aria-label="Hilfe zu den Filtern">?</button></summary><div class="body">
+    <input id="gq" placeholder="In allen Spalten suchen">
+    <label><input type="checkbox" id="unk" checked>Unbekannte Werte zeigen</label>
+    <label><input type="checkbox" id="grp" checked>Gleiche Filme zusammenfassen</label>
+    <label><input type="checkbox" id="sub">Nur mit Untertiteln</label>
+    <div class="group"><b>Länge</b>
+      <label for="min">Mindestlänge in Minuten</label><input id="min" type="number" min="0" value="60">
+      <label><input type="checkbox" id="hide">Kürzere Treffer ausblenden</label>
+    </div>
+  </div></details>
+  <details class="card" style="--cc:var(--c4)"><summary>Spalten</summary><div class="body">
+    <div class="m">Häkchen blendet eine Spalte ein oder aus, die Pfeile ändern die Reihenfolge.</div><div id="cols"></div>
+  </div></details>
+  <details class="card" style="--cc:var(--c5)"><summary>Einstellungen</summary><div class="body">
+    <label for="key">TMDB-API-Key (bleibt nur in diesem Browser)</label><input id="key" type="password" autocomplete="off">
+    <label for="px">Proxy-URL (Cloudflare Worker)</label><input id="px" placeholder="https://…workers.dev">
+    <button type="button" class="ghost" id="ex">Dienste exportieren</button>
+    <label class="m">Dienste importieren<input id="im" type="file" accept=".json"></label>
+    <button type="button" class="ghost" id="rs">Standarddienste wiederherstellen</button>
+  </div></details>
 </aside>
 <main>
   <form class="top" id="f">
@@ -89,10 +111,33 @@ details{margin-top:10px}summary{cursor:pointer;color:var(--ac)}
       <div class="m">Auch direkt in der Suchleiste: regie:godard jahr:1960 land:frankreich laenge:&gt;80 sprache:de. Eine Jahreszahl am Ende zählt nur als Hinweis.</div>
     </details>
   </form>
-  <div id="cands"></div><div id="stat"></div>
-  <div id="info">Gib einen Titel ein. Mit TMDB-Key erkennt die Suche den Film und sucht auch unter Original- und deutschem Titel.</div>
-  <div class="wrap"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
+  <div class="strip" id="cw" hidden><span class="lab">Meintest du</span><div id="cands"></div></div>
+  <div class="strip" id="sw" hidden><span class="lab">Quellen</span><div id="stat"></div></div>
+  <section class="res">
+    <div class="tools"><span id="info">Gib einen Titel ein. Mit TMDB-Key erkennt die Suche den Film und sucht auch unter Original- und deutschem Titel.</span><span class="sp"></span>
+      <button type="button" class="ghost" id="trb" hidden></button><span id="nsel" class="m"></span>
+      <button type="button" class="ghost" id="ecsv" title="Auswahl (oder alle sichtbaren Treffer) als CSV speichern">CSV</button>
+      <button type="button" class="ghost" id="ejson" title="Auswahl (oder alle sichtbaren Treffer) als JSON speichern">JSON</button></div>
+    <div class="wrap"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
+  </section>
 </main>
+<dialog id="dlg"><h3 id="sdt">Dienst hinzufügen</h3>
+  <form id="add">
+    <input id="n" placeholder="Name" required>
+    <select id="t">
+      <option value="tmdb">Streaminganbieter (via TMDB)</option><option value="mediathek">Mediathek-Sender</option>
+      <option value="youtube">YouTube</option><option value="archive">archive.org</option><option value="ddg">Website per Domain</option>
+      <option value="html">Eigene Such-URL</option><option value="link">Katalog-Link (Bibliothek)</option>
+      <option value="siteindex">Seitenindex (Übersicht → Unterseiten)</option>
+    </select>
+    <input id="a"><div class="m" id="hint"></div>
+    <div class="tm"><input id="r" placeholder="Land, z. B. DE" maxlength="2"><label><input type="checkbox" id="so" checked>Nur aktuell streambar</label></div>
+    <input id="o" placeholder="Such-Link zum Öffnen, mit {q} (optional)">
+    <select id="v"><option value="stream">Stream</option><option value="miete">Miete/Kauf online</option><option value="bibliothek">Bibliothek (ausleihbar)</option></select>
+    <div style="margin-top:10px"><button>Speichern</button> <button type="button" class="ghost" id="cx">Abbrechen</button></div>
+  </form>
+</dialog>
+<div id="pop" class="pop" hidden></div>
 <script>
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const ld = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
@@ -101,10 +146,11 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&
 const G = q => 'https://www.google.com/search?q=' + encodeURIComponent(q);
 const AV = {stream: 'Stream', miete: 'Miete/Kauf', bibliothek: 'Bibliothek'};
 const COLS = [['score', 'Relevanz'], ['title', 'Titel'], ['service', 'Dienst'], ['avail', 'Verfügbarkeit'], ['year', 'Jahr'],
-  ['director', 'Regisseur'], ['country', 'Land'], ['minutes', 'Länge (Min.)'], ['lang', 'Sprache'], ['subs', 'Untertitel']];
+  ['director', 'Regisseur'], ['country', 'Land'], ['minutes', 'Länge (Min.)'], ['lang', 'Sprache'], ['subs', 'Untertitel'], ['action', 'Aktion']];
 const NUM = ['minutes', 'year', 'score'];
 const HINT = {tmdb: 'Anbietername bei TMDB, z. B. MUBI', mediathek: 'Sender, Komma-getrennt, z. B. ZDF,3SAT', youtube: 'Zusatz zur Suche, z. B. full movie',
-  archive: 'Kein Wert nötig', ddg: 'Domain, z. B. ubu.com (braucht Proxy)', html: 'Such-URL mit {q}', link: 'Katalog-URL mit {q}'};
+  archive: 'Kein Wert nötig', ddg: 'Domain, z. B. ubu.com (braucht Proxy)', html: 'Such-URL mit {q}', link: 'Katalog-URL mit {q}',
+  siteindex: 'Übersichtsseite, z. B. https://www.ubu.com/film/index.html (Proxy nötig)'};
 const D = (id, name, type, arg, avail, extra) => ({id, name, type, arg, avail, region: 'DE', stream_only: true, ...extra});
 const DEF = [
   D('netflix', 'Netflix', 'tmdb', 'Netflix', 'stream', {open: 'https://www.netflix.com/search?q={q}'}),
@@ -115,19 +161,24 @@ const DEF = [
   D('arte', 'Arte', 'mediathek', 'ARTE', 'stream', {open: 'https://www.arte.tv/de/search/?q={q}'}),
   D('youtube', 'YouTube', 'youtube', 'full movie', 'stream', {open: 'https://www.youtube.com/results?search_query={q}'}),
   D('archive', 'archive.org', 'archive', '', 'stream', {open: 'https://archive.org/search?query={q}'}),
-  D('rarefilmm', 'rarefilmm', 'ddg', 'rarefilmm.com', 'stream', {open: 'https://rarefilmm.com/?s={q}'}),
-  D('ubuweb', 'UbuWeb', 'ddg', 'ubu.com', 'stream'), D('fya', 'Films for Action', 'ddg', 'filmsforaction.org', 'stream'),
+  D('rarefilmm', 'rarefilmm', 'html', 'https://rarefilmm.com/?s={q}', 'stream'),
+  D('ubuweb', 'UbuWeb', 'siteindex', 'https://www.ubu.com/film/index.html', 'stream', {open: 'https://www.google.com/search?q=site%3Aubu.com%2Ffilm+{q}'}), D('fya', 'Films for Action', 'ddg', 'filmsforaction.org', 'stream'),
   D('afa', 'Anarchist Film Archive', 'ddg', 'anarchistfilmarchive.org', 'stream'),
   D('worldcat', 'WorldCat (Bibliotheken)', 'link', 'https://search.worldcat.org/search?q={q}', 'bibliothek')];
 let S = ld('cfg', null) || {services: DEF, key: '', proxy: ''};
 const save = () => sv('cfg', S);
+S.services.forEach(s => { if ((s.id === 'ubuweb' || s.id === 'rarefilmm') && s.type === 'ddg') Object.assign(s, DEF.find(x => x.id === s.id)); });
 let rows = [], cands = [], stat = {}, Fq = {}, lastQ = '', raw0 = '', pickId = null, runId = 0, editId = null, sort = {k: 'score', d: -1}, errs = '';
 let off = new Set(ld('off', []));
+const IDX = {}; let showTr = false;
 
 // ---------- Textwerkzeuge: Normalisierung, Ähnlichkeit (Tippfehler-tolerant) ----------
+const TR = /\b(trailer|teaser|vorschau|promo)\b/i, FMT = /^(mp4|m4v|avi|mov|wmv|flv|mpg|mpeg|ogv|webm|stream|download|real|quicktime|video)$/i,
+  NAVR = /^(ubuweb|ubu|home|top|back|next|previous|index|film|films|ubu film)$/i;
 const NOISE = /\b(full movie|full film|film|movie|hd|1080p|720p|english subtitles|eng sub|subtitles|trailer|ganzer film)\b/g;
 const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/&/g, ' and ').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
 const clean = s => norm(s).replace(/\b(19|20)\d\d\b/g, ' ').replace(NOISE, ' ').replace(/\s+/g, ' ').trim();
+const sq = s => clean(s).replace(/ /g, '');
 const bi = s => { const m = new Map(); for (let i = 0; i < s.length - 1; i++) { const g = s.slice(i, i + 2); m.set(g, (m.get(g) || 0) + 1); } return m; };
 function dice(a, b) {
   if (a === b) return 1; if (a.length < 2 || b.length < 2) return 0;
@@ -135,21 +186,22 @@ function dice(a, b) {
   return 2 * n / (a.length + b.length - 2);
 }
 function simOf(r, c) {
-  const t = clean(r.title), tt = t.split(' ').filter(Boolean); let best = 0;
+  const t = clean(r.title), tt = t.split(' ').filter(Boolean), tc = t.replace(/ /g, ''); let best = 0;
   for (const v of c.variants) {
-    const q = clean(v), tk = q.split(' ').filter(Boolean);
+    const q = clean(v), qc = q.replace(/ /g, ''), tk = q.split(' ').filter(Boolean), pen = .04 * Math.max(0, tt.length - tk.length - 1);
     const cov = tk.filter(w => tt.some(x => x === w || x.startsWith(w))).length / (tk.length || 1);
-    best = Math.max(best, dice(t, q), Math.max(0, cov * .85 - .04 * Math.max(0, tt.length - tk.length - 1)));
+    best = Math.max(best, dice(t, q), dice(tc, qc), tc === qc ? 1 : 0, qc.length > 3 && tc.includes(qc) ? .85 - pen : 0, Math.max(0, cov * .85 - pen));
   }
   return best;
 }
 function score(r, c, sim) {
-  if (r.link) return 35;
-  let sc = sim * 100; const wy = c.pick ? c.pick.year : (c.F.ysoft ? +c.F.y : null);
-  if (r.year && wy) sc += Math.abs(r.year - wy) <= 1 ? 12 : -25;
-  if (r.minutes != null) sc += r.minutes < 40 ? -35 : r.minutes < 70 ? -12 : 6;   // Trailer/Kurzes nach unten
-  sc += {stream: 8, miete: 3, bibliothek: 0}[r.avail] || 0; if (r.subs) sc += 4;
-  return Math.max(0, Math.min(100, Math.round(sc)));
+  if (r.link) { r.why = 'Katalog-Link ohne Titel: fester Wert 35'; return 35; }
+  const wy = c.pick ? c.pick.year : (c.F.ysoft ? +c.F.y : null), p = [['Titel', Math.round(sim * 100)]];
+  if (r.year && wy) p.push(['Jahr', Math.abs(r.year - wy) <= 1 ? 12 : -25]);
+  if (r.minutes != null) p.push(['Länge', r.minutes < 40 ? -35 : r.minutes < 70 ? -12 : 6]);
+  p.push(['Art', {stream: 8, miete: 3, bibliothek: 0}[r.avail] || 0]); if (r.subs) p.push(['Untertitel', 4]);
+  r.why = p.map(([k, v]) => `${k} ${v > 0 && k !== 'Titel' ? '+' : ''}${v}`).join(' · ');
+  return Math.max(0, Math.min(100, p.reduce((a, x) => a + x[1], 0)));
 }
 
 // ---------- Suchsyntax: regie: jahr: land: laenge: sprache: ----------
@@ -165,7 +217,10 @@ function parseQ(raw) {
 // ---------- Netzwerk: direkt, sonst über optionalen Proxy ----------
 async function fx(url, opt = {}, force) {
   const px = S.proxy && S.proxy.replace(/\/$/, '') + '/?u=';
-  const go = async u => { const r = await fetch(u, opt); if (!r.ok) { const e = new Error('HTTP ' + r.status); e.http = 1; throw e; } return r.text(); };
+  const go = async u => { const r = await fetch(u, opt); if (!r.ok) { const e = new Error('HTTP ' + r.status); e.http = 1; throw e; }
+    const b = await r.arrayBuffer();
+    const cs = (r.headers.get('content-type') || '').match(/charset=([\w-]+)/i)?.[1] || new TextDecoder('latin1').decode(b.slice(0, 2048)).match(/<meta[^>]+charset=["']?([\w-]+)/i)?.[1] || 'utf-8';
+    try { return new TextDecoder(cs).decode(b); } catch { return new TextDecoder().decode(b); } };
   if (!force) try { return await go(url); } catch (e) { if (e.http) throw e; if (!px) throw new Error('Vom Browser blockiert (CORS), Proxy nötig'); }
   if (!px) throw new Error('Proxy nötig (Einstellungen)');
   return go(px + encodeURIComponent(url));
@@ -173,7 +228,9 @@ async function fx(url, opt = {}, force) {
 const tj = (p, q = '') => fx(`https://api.themoviedb.org/3${p}?api_key=${S.key}&language=de-DE${q}`).then(JSON.parse);
 const reg = new Intl.DisplayNames(['de'], {type: 'region'}), regEn = new Intl.DisplayNames(['en'], {type: 'region'});
 const yr = F => { const m = (F.y || '').match(/^(\d{4})(?:-(\d{4}))?$/); return m ? [+m[1], +(m[2] || m[1])] : null; };
-const vs = c => c.variants.slice(0, 2);
+const vs = c => c.variants.slice(0, 3);
+const vars = (t, p) => { const m = new Map(); [t, p?.title, p?.original_title, t.includes(' ') && t.split(' ').length <= 3 && t.replace(/\s+/g, '')]
+  .forEach(x => x && !m.has(norm(x)) && m.set(norm(x), x)); return [...m.values()].slice(0, 4); };
 const mins = t => { const p = (t || '').split(':').map(Number); return p.length && !p.some(isNaN) ? Math.round(p.reduce((a, x) => a * 60 + x, 0) / 60) : null; };
 const parseHtml = h => new DOMParser().parseFromString(h, 'text/html');
 
@@ -203,21 +260,21 @@ const A = {
       subs: !!r.url_subtitle, sub_url: r.url_subtitle, note: r.channel}));
   },
   async archive(s, c) {
-    const y = !c.F.ysoft && yr(c.F);
-    const res = await Promise.all(vs(c).map(async v => {
+    const y = !c.F.ysoft && yr(c.F), seen = new Map();
+    await Promise.all(vs(c).map(async v => {
       const q = `title:(${v}) AND mediatype:movies` + (c.F.d ? ` AND creator:(${c.F.d})` : '') + (y ? ` AND year:[${y[0]} TO ${y[1]}]` : '');
       const u = 'https://archive.org/advancedsearch.php?' + new URLSearchParams([['q', q], ['rows', 10], ['output', 'json'], ...['identifier', 'title', 'language', 'year', 'creator'].map(x => ['fl[]', x])]);
-      return Promise.all(JSON.parse(await fx(u)).response.docs.map(async d => {
-        const r = {title: d.title, url: 'https://archive.org/details/' + d.identifier, lang: typeof d.language === 'string' ? d.language : null,
-          year: /^\d{4}$/.test(d.year) ? +d.year : null, director: typeof d.creator === 'string' ? d.creator : null};
-        try {
-          const f = JSON.parse(await fx('https://archive.org/metadata/' + d.identifier)).files || [], L = f.map(x => +x.length).filter(n => n > 0);
-          r.minutes = L.length ? Math.round(Math.max(...L) / 60) : null; r.subs = f.some(x => /\.(srt|vtt)$/i.test(x.name));
-        } catch {}
-        return r;
-      }));
+      JSON.parse(await fx(u)).response.docs.forEach(d => seen.set(d.identifier, d));
     }));
-    return res.flat(2);
+    return Promise.all([...seen.values()].slice(0, 14).map(async d => {
+      const r = {title: d.title, url: 'https://archive.org/details/' + d.identifier, lang: typeof d.language === 'string' ? d.language : null,
+        year: /^\d{4}$/.test(d.year) ? +d.year : null, director: typeof d.creator === 'string' ? d.creator : null};
+      try {
+        const f = JSON.parse(await fx('https://archive.org/metadata/' + d.identifier)).files || [], L = f.map(x => +x.length).filter(n => n > 0);
+        r.minutes = L.length ? Math.round(Math.max(...L) / 60) : null; r.subs = f.some(x => /\.(srt|vtt)$/i.test(x.name));
+      } catch {}
+      return r;
+    }));
   },
   async youtube(s, c) {
     const res = await Promise.all(vs(c).map(async v => {
@@ -229,20 +286,78 @@ const A = {
     return res.flat();
   },
   async ddg(s, c) {
-    const res = await Promise.all(vs(c).map(async v => {
+    const res = await Promise.all(c.variants.slice(0, 2).map(async v => {
       const h = await fx('https://html.duckduckgo.com/html/?q=' + encodeURIComponent(`site:${s.arg} ${v} ${c.F.d || ''}`), {}, true);
       return [...parseHtml(h).querySelectorAll('a.result__a')].slice(0, 8).map(a => ({title: a.textContent.trim(), url: new URL(a.getAttribute('href'), 'https://duckduckgo.com').searchParams.get('uddg') || a.href}));
     }));
     return res.flat();
   },
   async html(s, c) {
-    const url = s.arg.replace('{q}', encodeURIComponent(c.q)), tk = norm(c.q).split(' ');
-    return [...parseHtml(await fx(url)).querySelectorAll('a[href]')].map(a => ({title: a.textContent.trim(), url: new URL(a.getAttribute('href'), url).href}))
-      .filter(r => r.title && tk.every(w => norm(r.title).includes(w))).slice(0, 10);
+    const res = await Promise.all(vs(c).map(async v => {
+      const url = s.arg.replace('{q}', encodeURIComponent(v)), q = sq(v);
+      return [...parseHtml(await fx(url)).querySelectorAll('a[href]')].map(a => ({title: a.textContent.trim(), url: new URL(a.getAttribute('href'), url).href}))
+        .filter(r => r.title && sq(r.title).includes(q)).slice(0, 10);
+    }));
+    return res.flat();
+  },
+  async siteindex(s, c) {
+    const idx = await getIdx(s), qs = c.variants.map(sq), out = [];
+    for (const it of idx.items) {
+      const d = sq(it.d || ''), ds = qs.some(q => q.length > 2 && d.includes(q)), ts = simOf({title: it.t}, c);
+      if (ts >= .55 || ds) out.push({title: it.t, url: it.u, director: it.d, _s: Math.max(ts, ds ? .6 : 0)});
+    }
+    return out.sort((a, b) => b._s - a._s).slice(0, 40);
   },
   async link(s, c) { return [{title: 'Katalog durchsuchen: ' + c.q, url: s.arg.replace('{q}', encodeURIComponent(c.q)), note: 'Bestand manuell prüfen', link: true}]; }
 };
 const openUrl = (s, q) => (s.open || (s.type === 'ddg' ? G(`site:${s.arg} {q}`) : s.type === 'html' || s.type === 'link' ? s.arg : G(s.name + ' {q}'))).replace('{q}', s.open || s.type === 'html' || s.type === 'link' ? encodeURIComponent(q) : q);
+
+// ---------- Seitenindex: Übersichtsseite -> Unterseiten (langsam, einmalig, wird gespeichert) ----------
+let building = false;
+async function getIdx(s) {
+  if (!IDX[s.id]) {   // neuere Fassung gewinnt: Browser-Speicher oder Datei im Repository
+    const a = ld('idx:' + s.id, null); let b = null;
+    try { b = JSON.parse(await (await fetch('index-' + s.id + '.json')).text()); } catch {}
+    const best = [a, b].filter(x => x?.items).sort((p, q) => q.built - p.built)[0]; if (best) IDX[s.id] = best;
+  }
+  if (!IDX[s.id]) throw new Error('Index fehlt, links auf ⟳ klicken');
+  return IDX[s.id];
+}
+async function buildIndex(s) {
+  if (building) return; building = true;
+  const st = t => $('#info').textContent = t, u0 = new URL(s.arg), host = u0.hostname.replace(/^www\./, ''), dir = u0.pathname.replace(/[^/]*$/, '');
+  try {
+    st('Index: lese Übersichtsseite …');
+    const subs = new Map();
+    parseHtml(await fx(s.arg, {}, true)).querySelectorAll('a[href]').forEach(a => {
+      try {
+        const u = new URL(a.getAttribute('href'), s.arg); u.hash = ''; const t = a.textContent.trim().replace(/\s+/g, ' ');
+        if (u.hostname.replace(/^www\./, '') === host && u.pathname.startsWith(dir) && /\.html?$/i.test(u.pathname) && !/index\.html?$/i.test(u.pathname) && t && !NAVR.test(t)) subs.set(u.href, t);
+      } catch {}
+    });
+    const items = [], seen = new Set(), list = [...subs]; let n = 0;
+    for (const [u, name] of list) {
+      st(`Index: Seite ${++n} von ${list.length} (${name}) …`);
+      try {
+        parseHtml(await fx(u, {}, true)).querySelectorAll('a[href]').forEach(a => {
+          let t = a.textContent.trim().replace(/\s+/g, ' ');
+          if (FMT.test(t)) t = (a.parentElement?.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+          const h = new URL(a.getAttribute('href'), u); h.hash = '';
+          if (t.length < 2 || NAVR.test(t) || !/^https?:$/.test(h.protocol) || h.href === u || /(^|\/)(index\.html?)?$/i.test(h.pathname) || seen.has(h.href)) return;
+          seen.add(h.href); items.push({t, u: h.href, d: name});
+        });
+      } catch {}
+      await new Promise(r => setTimeout(r, 350));   // schonend für die Seite
+    }
+    const idx = {built: Date.now(), items}; IDX[s.id] = idx;
+    try { localStorage.setItem('idx:' + s.id, JSON.stringify(idx)); } catch { alert('Der Index ist zu groß für den Browserspeicher und gilt nur bis zum Neuladen. Nutze ⤓ und lege die Datei ins Repository.'); }
+    st(`Index fertig: ${items.length} Einträge aus ${list.length} Seiten.`); drawServices();
+  } finally { building = false; }
+}
+function expIdx(s) {
+  const i = IDX[s.id] || ld('idx:' + s.id, null); if (!i) return alert('Noch kein Index vorhanden.');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(i)], {type: 'application/json'})); a.download = 'index-' + s.id + '.json'; a.click();
+}
 
 // ---------- Suchablauf: Film erkennen, alle Dienste parallel, Ergebnisse live ----------
 async function go(raw, pick) {
@@ -251,20 +366,22 @@ async function go(raw, pick) {
   const {text, F} = parseQ(raw + ' ' + extra); if (!text) return;
   const ids = $$('.sc:checked').map(x => x.value), sel = S.services.filter(s => ids.includes(s.id));
   if (!ids.length) { $('#info').textContent = 'Wähle mindestens einen Dienst aus.'; return; }
-  const my = ++runId; rows = []; cands = []; stat = {}; Fq = F; lastQ = text; errs = '';
+  const my = ++runId; rows = []; cands = []; stat = {}; sel.clear(); Fq = F; lastQ = text; errs = '';
   history.replaceState(null, '', '#q=' + encodeURIComponent(raw));
   const h = [raw, ...ld('hist', []).filter(x => x !== raw)].slice(0, 20); sv('hist', h); $('#hist').innerHTML = h.map(x => `<option value="${esc(x)}">`).join('');
-  const c = {q: text, F, variants: [text], pick: null};
+  const c = {q: text, F, variants: vars(text), pick: null};
   $('#info').textContent = 'Suche läuft …'; render(); drawStat();
   if (S.key) try {
     const y = yr(F), r = await tj('/search/movie', '&query=' + encodeURIComponent(text) + (y && y[0] === y[1] ? '&year=' + y[0] : ''));
     cands = r.results.slice(0, 5).map(m => ({id: m.id, title: m.title, original_title: m.original_title, year: m.release_date ? +m.release_date.slice(0, 4) : null}));
     const p = pick ? cands.find(x => x.id == pick) : cands[0];
     if (p && (pick || Math.max(dice(norm(text), norm(p.title)), dice(norm(text), norm(p.original_title))) > .5)) {
-      c.pick = p; c.variants = [...new Set([text, p.title, p.original_title])].slice(0, 3);
+      c.pick = p; c.variants = vars(text, p);
     }
   } catch (e) { errs = `TMDB: ${esc(e.message)}`; }
   if (my !== runId) return; drawCands(c);
+  if (c.pick) tj('/movie/' + c.pick.id + '/videos', '&include_video_language=de,en,null').then(v => my === runId && add({name: 'TMDB-Trailer', avail: 'stream', type: 'tmdb'},
+    v.results.filter(x => x.site === 'YouTube' && /Trailer|Teaser/.test(x.type)).slice(0, 3).map(x => ({title: c.pick.title + ' – ' + x.name, url: 'https://www.youtube.com/watch?v=' + x.key, year: c.pick.year, trailer: true})), c)).catch(() => {});
   sel.forEach(async s => {
     stat[s.id] = {s, st: 'run'}; drawStat();
     try { const out = await A[s.type](s, c); if (my !== runId) return; add(s, out, c); stat[s.id] = {s, st: 'ok', n: out.length}; }
@@ -275,23 +392,30 @@ async function go(raw, pick) {
 function add(s, out, c) {
   for (let r of out) {
     const m = r.title.match(/\b(19\d\d|20\d\d)\b/);
-    r = {minutes: null, lang: null, subs: null, sub_url: null, note: null, director: null, country: null, cx: '', year: m ? +m[1] : null, avail: s.avail, ...r, service: s.name};
+    r = {minutes: null, lang: null, subs: null, sub_url: null, note: null, director: null, country: null, cx: '', year: m ? +m[1] : null, avail: s.avail, ...r, service: s.name, id: ++uid};
+    r.trailer = r.trailer || TR.test(r.title) || (s.type === 'youtube' && r.minutes != null && r.minutes <= 5);
     const sim = r.link ? 0 : simOf(r, c); r.score = score(r, c, sim);
-    r.gk = r.link ? 'zz-' + s.id : (c.pick && sim >= .8 ? clean(c.pick.title) : clean(r.title));
+    r.gk = r.link ? 'zz-' + s.id : (c.pick && sim >= .8 ? sq(c.pick.title) : sq(r.title));
     rows.push(r);
   }
   render();
 }
 function drawCands(c) {
-  $('#cands').innerHTML = cands.length > 1 ? '<span class="m">Meintest du:</span>' + cands.map(x =>
-    `<button class="chip ${c.pick?.id === x.id ? 'on' : ''}" data-id="${x.id}">${esc(x.title)}${x.year ? ' (' + x.year + ')' : ''}</button>`).join('') : '';
+  $('#cw').hidden = cands.length < 2;
+  $('#cands').innerHTML = cands.map(x => `<button type="button" class="sug ${c.pick?.id === x.id ? 'on' : ''}" data-id="${x.id}">${esc(x.title)}${x.year ? ' (' + x.year + ')' : ''}</button>`).join('');
 }
+const rk = x => x.st === 'ok' ? x.n : x.st === 'run' ? -.5 : -1;
 function drawStat() {
-  $('#stat').innerHTML = Object.values(stat).map(({s, st, n, msg}) =>
-    `<a class="chip ${st}" href="${esc(openUrl(s, lastQ))}" target="_blank" rel="noopener" title="${esc(msg || 'Auf der Seite selbst suchen')}">${esc(s.name)} ${st === 'ok' ? n : st === 'run' ? '…' : '✗ ' + esc(msg)} ↗</a>`).join('');
+  const v = Object.values(stat).sort((a, b) => rk(b) - rk(a) || a.s.name.localeCompare(b.s.name));
+  $('#sw').hidden = !v.length;
+  $('#stat').innerHTML = v.map(({s, st, n, msg}) => `<a class="svc ${st === 'ok' && n ? 'hit' : st}" href="${esc(openUrl(s, lastQ))}" target="_blank" rel="noopener" title="${esc(msg || 'Auf der Seite selbst suchen')}"><i class="dot"></i>${esc(s.name)} <b>${st === 'ok' ? n : st === 'run' ? '…' : '!'}</b>${st === 'err' ? `<span class="m">${esc(msg)}</span>` : ''} ↗</a>`).join('');
 }
 
 // ---------- Tabelle ----------
+const KEYS = COLS.map(c => c[0]), LAB = Object.fromEntries(COLS), cs0 = ld('cols', {});
+let order = [...(cs0.order || []).filter(k => KEYS.includes(k)), ...KEYS.filter(k => !(cs0.order || []).includes(k))], hid = new Set(cs0.hide || []);
+const vis = () => order.filter(k => !hid.has(k)), saveCols = () => sv('cols', {order, hide: [...hid]});
+let FV = {}, cur = [], sel = new Set(), uid = 0;
 function match(x, k, f) {
   f = f.trim().toLowerCase(); if (!f) return true;
   const v = k === 'country' && x.country ? x.country + ' ' + x.cx : x[k];
@@ -311,73 +435,147 @@ function action(x) {
   if (x.subs !== true) return `<a href="https://www.opensubtitles.org/en/search/sublanguageid-eng/moviename-${encodeURIComponent(lastQ)}" target="_blank" rel="noopener">EN-Untertitel suchen</a>`;
   return '';
 }
+const CELL = {
+  score: x => `<span class="rel" title="${esc(x.why)}"><i style="width:${x.score}%"></i></span> <span class="m" title="${esc(x.why)}">${x.score}</span>`,
+  title: x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.trailer ? ' <span class="tag">Trailer</span>' : ''}${x.note ? `<div class="m">${esc(x.note)}</div>` : ''}`,
+  service: x => esc(x.service), avail: x => `<span class="tag av-${esc(x.avail)}">${AV[x.avail] || esc(x.avail)}</span>`,
+  year: x => x.year ?? '?', director: x => esc(x.director || '?'), country: x => esc(x.country || '?'),
+  minutes: (x, mn) => `${x.minutes ?? '?'}${mn && x.minutes != null && x.minutes < mn ? ' <span class="w" title="Kürzer als die Mindestlänge, evtl. Trailer">kurz</span>' : ''}`,
+  lang: x => esc(x.lang || '?'), subs: x => x.subs ? 'ja' : x.subs === false ? 'nein' : '?', action: x => action(x)
+};
+function drawHead() {
+  const v = vis();
+  $('#th').innerHTML = '<tr><th class="ck"><input type="checkbox" id="selall" aria-label="Alle sichtbaren Treffer auswählen"></th>' + v.map(k => {
+    const on = sort.k === k;
+    return `<th ${k !== 'action' ? `data-k="${k}"` : ''} class="${on ? 'sorted' : ''}" ${on ? `aria-sort="${sort.d > 0 ? 'ascending' : 'descending'}"` : ''}>${LAB[k]}${on ? `<span class="ar">${sort.d > 0 ? '▲' : '▼'}</span>` : ''}${k === 'score' ? '<button type="button" class="q" data-help="rel" aria-label="Wie entsteht die Relevanz?">?</button>' : ''}</th>`;
+  }).join('') + '</tr><tr><th class="ck"></th>' + v.map(k => `<th>${k === 'action' ? '' : `<input data-f="${k}" value="${esc(FV[k] || '')}" placeholder="Filter" aria-label="Filter: ${LAB[k]}">`}</th>`).join('') + '</tr>';
+}
 function render() {
   const av = $$('.av:checked').map(x => x.value), min = +$('#min').value || 0, g = $('#gq').value.toLowerCase().trim();
   const H = [['director', Fq.d], ['country', Fq.c], ['year', Fq.ysoft ? '' : Fq.y], ['minutes', Fq.len], ['lang', Fq.l]].filter(x => x[1]);
-  const fs = [...$$('[data-f]').map(i => [i.dataset.f, i.value]).filter(x => x[1].trim()), ...H];
-  let r = rows.filter(x => av.includes(x.avail) && (!$('#sub').checked || x.subs) && !($('#hide').checked && min && x.minutes != null && x.minutes < min) &&
+  const fs = [...Object.entries(FV).filter(x => x[1].trim()), ...H];
+  const nt = rows.filter(x => x.trailer).length; $('#trb').hidden = !nt; $('#trb').textContent = (showTr ? 'Trailer ausblenden' : 'Trailer anzeigen') + ' (' + nt + ')';
+  let r = rows.filter(x => (showTr || !x.trailer) && av.includes(x.avail) && (!$('#sub').checked || x.subs) && !($('#hide').checked && min && x.minutes != null && x.minutes < min) &&
     (!g || [x.service, x.title, x.director, x.country, x.lang, x.note].join(' ').toLowerCase().includes(g)) && fs.every(([k, f]) => match(x, k, f)));
   const grp = $('#grp').checked && sort.k === 'score' && sort.d < 0;
   if (grp) { const mx = {}; r.forEach(x => mx[x.gk] = Math.max(mx[x.gk] || 0, x.score)); r.sort((a, b) => mx[b.gk] - mx[a.gk] || (a.gk > b.gk ? 1 : a.gk < b.gk ? -1 : 0) || b.score - a.score); }
   else r.sort((a, b) => { const A = a[sort.k] ?? '', B = b[sort.k] ?? ''; return (A > B ? 1 : A < B ? -1 : 0) * sort.d; });
-  let prev; const mn = min;
+  cur = r; const v = vis(); let prev;
   $('#tb').innerHTML = r.map(x => {
     const sub = grp && x.gk === prev; prev = x.gk;
-    return `<tr class="${sub ? 'sub' : ''}"><td><span class="rel" title="Relevanz ${x.score}"><i style="width:${x.score}%"></i></span></td>` +
-      `<td><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.note ? `<div class="m">${esc(x.note)}</div>` : ''}</td><td>${esc(x.service)}</td>` +
-      `<td><span class="tag">${AV[x.avail] || esc(x.avail)}</span></td><td>${x.year ?? '?'}</td><td>${esc(x.director || '?')}</td><td>${esc(x.country || '?')}</td>` +
-      `<td>${x.minutes ?? '?'}${mn && x.minutes != null && x.minutes < mn ? ' <span class="w" title="Kürzer als die Mindestlänge, evtl. Trailer">kurz</span>' : ''}</td>` +
-      `<td>${esc(x.lang || '?')}</td><td>${x.subs ? 'ja' : x.subs === false ? 'nein' : '?'}</td><td>${action(x)}</td></tr>`;
+    return `<tr class="${sub ? 'sub' : ''}${sel.has(x.id) ? ' sel' : ''}"><td class="ck"><input type="checkbox" data-id="${x.id}" ${sel.has(x.id) ? 'checked' : ''} aria-label="Treffer auswählen"></td>` +
+      v.map(k => `<td data-c="${k}">${CELL[k](x, min)}</td>`).join('') + '</tr>';
   }).join('');
+  const n = r.filter(x => sel.has(x.id)).length; $('#nsel').textContent = n ? n + ' ausgewählt' : '';
   const pending = Object.values(stat).some(x => x.st === 'run');
-  $('#info').innerHTML = `${r.length} von ${rows.length} Treffern für „${esc(lastQ)}“${pending ? ' (weitere Dienste laufen noch)' : ''}` +
+  $('#info').innerHTML = `${r.length} von ${rows.length - (showTr ? 0 : nt)} Treffern für „${esc(lastQ)}“${pending ? ' (weitere Dienste laufen noch)' : ''}` +
     (errs ? ` <span style="color:var(--err)">${errs}</span>` : '') + (!S.key ? ' · Tipp: Mit TMDB-Key wird der Film genauer erkannt.' : '');
 }
-
+// ---------- Export (Auswahl oder alle sichtbaren Treffer) ----------
+function dlFile(name, text, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type})); a.download = name; a.click(); }
+const plain = (x, k) => k === 'avail' ? AV[x.avail] || x.avail : k === 'subs' ? (x.subs ? 'ja' : x.subs === false ? 'nein' : '') : x[k] ?? '';
+function exportAs(kind) {
+  const R = cur.filter(x => sel.has(x.id)).length ? cur.filter(x => sel.has(x.id)) : cur, ks = vis().filter(k => k !== 'action');
+  if (!R.length) return alert('Keine Treffer zum Exportieren.');
+  const fn = 'filmsuche-' + (lastQ || 'ergebnisse').replace(/\W+/g, '-');
+  if (kind === 'json') return dlFile(fn + '.json', JSON.stringify(R.map(x => ({...Object.fromEntries(ks.map(k => [LAB[k], plain(x, k)])), Link: x.url})), null, 2), 'application/json');
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  dlFile(fn + '.csv', '\ufeff' + [[...ks.map(k => LAB[k]), 'Link'], ...R.map(x => [...ks.map(k => plain(x, k)), x.url])].map(r => r.map(q).join(';')).join('\r\n'), 'text/csv');
+}
+// ---------- Hilfe-Fenster (?) ----------
+const HELP = {
+  rel: `<b>So entsteht die Relevanz (0–100)</b><br>Sie zeigt, wie gut ein Treffer zu deiner Suche passt. Bewegst du die Maus über den Balken, siehst du die Rechnung für diesen Treffer.<ul>
+    <li><b>Titel:</b> Ähnlichkeit zum gesuchten Titel, 0–100. Leerzeichen, Akzente, Groß-/Kleinschreibung und kleine Tippfehler zählen kaum.</li>
+    <li><b>Jahr:</b> +12, wenn es zum erkannten Film passt (±1 Jahr), sonst −25. Nur wenn Jahr und Film bekannt sind.</li>
+    <li><b>Länge:</b> +6 ab 70 Min., −12 bei 40–69 Min., −35 darunter (meist Ausschnitt oder Trailer).</li>
+    <li><b>Art:</b> Stream +8, Miete/Kauf +3, Bibliothek 0.</li><li><b>Untertitel</b> vorhanden: +4.</li>
+    <li>Katalog-Links ohne Titel bekommen fest 35.</li></ul>`,
+  filter: `<b>Treffer eingrenzen</b><ul>
+    <li><b>Spaltenfilter:</b> Tippe unter eine Spaltenüberschrift. Text: enthält das Wort. <code>!Wort</code> schließt Treffer mit dem Wort aus.</li>
+    <li><b>Zahlen</b> (Länge, Jahr, Relevanz): <code>&gt;90</code>, <code>&lt;120</code>, <code>60-120</code> oder eine genaue Zahl.</li>
+    <li>Mehrere Filter gelten gleichzeitig. Das Feld hier sucht in allen Spalten auf einmal.</li>
+    <li><b>Unbekannte Werte zeigen:</b> Treffer mit „?“ in einer gefilterten Spalte bleiben sichtbar.</li>
+    <li>In der Suchleiste gehen außerdem <code>regie:</code> <code>jahr:</code> <code>land:</code> <code>laenge:</code> <code>sprache:</code>.</li></ul>`
+};
+document.addEventListener('click', e => {
+  const p = $('#pop'), q = e.target.closest('.q');
+  if (!q) { if (!e.target.closest('#pop')) p.hidden = true; return; }
+  e.preventDefault(); if (!p.hidden && p.dataset.k === q.dataset.help) { p.hidden = true; return; }
+  p.dataset.k = q.dataset.help; p.innerHTML = HELP[q.dataset.help]; p.hidden = false;
+  const b = q.getBoundingClientRect(); p.style.left = Math.max(8, Math.min(b.left, innerWidth - p.offsetWidth - 12)) + 'px'; p.style.top = Math.min(b.bottom + 6, innerHeight - p.offsetHeight - 8) + 'px';
+});
 // ---------- Dienste verwalten, Einstellungen ----------
 function typeUI() {
   const t = $('#t').value; $('#hint').textContent = HINT[t]; $('#a').placeholder = HINT[t]; $('#a').disabled = t === 'archive';
   $$('.tm').forEach(x => x.hidden = t !== 'tmdb');
 }
-function fillForm(s) {
+function openForm(s) {
   editId = s?.id || null; $('#n').value = s?.name || ''; $('#t').value = s?.type || 'ddg'; $('#a').value = s?.arg || ''; $('#r').value = s?.region || 'DE';
   $('#so').checked = s ? s.stream_only !== false : true; $('#v').value = s?.avail || 'stream'; $('#o').value = s?.open || '';
-  $('#sdt').textContent = s ? 'Dienst bearbeiten: ' + s.name : 'Dienst hinzufügen'; $('#cx').hidden = !s; $('#sd').open = !!s; typeUI();
+  $('#sdt').textContent = s ? 'Dienst bearbeiten: ' + s.name : 'Dienst hinzufügen'; typeUI(); $('#dlg').showModal();
 }
 function drawServices() {
-  $('#sv').innerHTML = S.services.map(s => `<div class="srow"><label><input type="checkbox" class="sc" value="${esc(s.id)}" ${off.has(s.id) ? '' : 'checked'}>${esc(s.name)}</label>` +
-    `<button class="x" data-a="edit" data-id="${esc(s.id)}" aria-label="${esc(s.name)} bearbeiten" title="Bearbeiten">✎</button>` +
-    `<button class="x" data-a="del" data-id="${esc(s.id)}" aria-label="${esc(s.name)} entfernen" title="Entfernen">×</button></div>`).join('');
+  $('#sv').innerHTML = S.services.map(s => {
+    const i = IDX[s.id] || ld('idx:' + s.id, null), si = s.type === 'siteindex';
+    return `<div class="srow"><label><input type="checkbox" class="sc" value="${esc(s.id)}" ${off.has(s.id) ? '' : 'checked'}>${esc(s.name)}</label>` +
+      (si ? `<button class="x" data-a="idx" data-id="${esc(s.id)}" aria-label="Index von ${esc(s.name)} aufbauen" title="Index aufbauen oder aktualisieren">⟳</button><button class="x" data-a="exp" data-id="${esc(s.id)}" aria-label="Index speichern" title="Index als Datei speichern">⤓</button>` : '') +
+      `<button class="x" data-a="edit" data-id="${esc(s.id)}" aria-label="${esc(s.name)} bearbeiten" title="Bearbeiten">✎</button>` +
+      `<button class="x" data-a="del" data-id="${esc(s.id)}" aria-label="${esc(s.name)} entfernen" title="Entfernen">×</button></div>` +
+      (si ? `<div class="m">${i?.items ? i.items.length + ' Einträge, Stand ' + new Date(i.built).toLocaleDateString('de') : 'noch kein Index'}</div>` : '');
+  }).join('');
+}
+function drawCols() {
+  $('#cols').innerHTML = order.map((k, i) => `<div class="srow"><label><input type="checkbox" data-col="${k}" ${hid.has(k) ? '' : 'checked'}>${LAB[k]}</label>` +
+    `<button type="button" class="x" data-mv="-1" data-k="${k}" aria-label="${LAB[k]} nach oben" ${i ? '' : 'disabled'}>↑</button>` +
+    `<button type="button" class="x" data-mv="1" data-k="${k}" aria-label="${LAB[k]} nach unten" ${i < order.length - 1 ? '' : 'disabled'}>↓</button></div>`).join('');
 }
 $('#sv').addEventListener('change', e => { if (!e.target.classList.contains('sc')) return; e.target.checked ? off.delete(e.target.value) : off.add(e.target.value); sv('off', [...off]); });
 $('#sv').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return; const s = S.services.find(x => x.id === b.dataset.id);
-  if (b.dataset.a === 'edit') fillForm(s);
-  else if (confirm(s.name + ' entfernen?')) { S.services = S.services.filter(x => x.id !== s.id); if (editId === s.id) fillForm(null); save(); drawServices(); }
+  if (b.dataset.a === 'edit') openForm(s);
+  else if (b.dataset.a === 'idx') buildIndex(s).catch(e => { building = false; $('#info').textContent = 'Index-Fehler: ' + e.message; });
+  else if (b.dataset.a === 'exp') expIdx(s);
+  else if (confirm(s.name + ' entfernen?')) { S.services = S.services.filter(x => x.id !== s.id); save(); drawServices(); }
 });
-$('#t').addEventListener('change', typeUI); $('#cx').addEventListener('click', () => fillForm(null));
+$('#addbtn').addEventListener('click', () => openForm(null));
+$('#t').addEventListener('change', typeUI); $('#cx').addEventListener('click', () => $('#dlg').close());
 $('#add').addEventListener('submit', e => {
   e.preventDefault();
   const o = {name: $('#n').value.trim(), type: $('#t').value, arg: $('#a').value.trim(), avail: $('#v').value, region: ($('#r').value || 'DE').toUpperCase(), stream_only: $('#so').checked, open: $('#o').value.trim()};
   if (editId) S.services = S.services.map(s => s.id === editId ? {...s, ...o} : s);
   else S.services.push({id: o.name.toLowerCase().replace(/\W+/g, '') + Date.now().toString(36), ...o});
-  save(); fillForm(null); drawServices();
+  save(); $('#dlg').close(); drawServices();
+});
+$('#cols').addEventListener('click', e => {
+  const b = e.target.closest('[data-mv]'); if (!b) return; const i = order.indexOf(b.dataset.k), j = i + +b.dataset.mv;
+  [order[i], order[j]] = [order[j], order[i]]; saveCols(); drawCols(); drawHead(); render();
+});
+$('#cols').addEventListener('change', e => {
+  const k = e.target.dataset.col; if (!k) return; e.target.checked ? hid.delete(k) : hid.add(k);
+  if (!vis().length) { hid.delete(k); e.target.checked = true; } saveCols(); drawHead(); render();
 });
 $('#key').value = S.key; $('#px').value = S.proxy;
-$('#key').addEventListener('change', e => { S.key = e.target.value.trim(); save(); });
-$('#px').addEventListener('change', e => { S.proxy = e.target.value.trim(); save(); });
-$('#ex').addEventListener('click', () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S.services, null, 2)], {type: 'application/json'})); a.download = 'filmsuche-dienste.json'; a.click(); });
+$('#key').addEventListener('input', e => { S.key = e.target.value.trim(); save(); });
+$('#px').addEventListener('input', e => { S.proxy = e.target.value.trim(); save(); });
+$('#ex').addEventListener('click', () => dlFile('filmsuche-dienste.json', JSON.stringify(S.services, null, 2), 'application/json'));
+$('#rs').addEventListener('click', () => { if (confirm('Alle eigenen Änderungen an den Diensten verwerfen?')) { S.services = structuredClone(DEF); save(); drawServices(); } });
 $('#im').addEventListener('change', async e => { try { S.services = JSON.parse(await e.target.files[0].text()); save(); drawServices(); } catch { alert('Die Datei ist keine gültige Dienste-Liste.'); } });
 
-$('#th').innerHTML = '<tr>' + COLS.map(([k, l]) => `<th data-k="${k}">${l}</th>`).join('') + '<th>Aktion</th></tr><tr>' +
-  COLS.map(([k, l]) => `<th><input data-f="${k}" placeholder="Filter" aria-label="Filter: ${l}"></th>`).join('') + '<th></th></tr>';
-$('#th').addEventListener('click', e => { const k = e.target.dataset.k; if (!k) return; sort = {k, d: sort.k === k ? -sort.d : (k === 'score' ? -1 : 1)}; render(); });
+$('#th').addEventListener('click', e => {
+  if (e.target.closest('.q')) return; const th = e.target.closest('th[data-k]'); if (!th) return; const k = th.dataset.k;
+  sort = {k, d: sort.k === k ? -sort.d : (k === 'score' ? -1 : 1)}; drawHead(); render();
+});
+$('#th').addEventListener('input', e => { const k = e.target.dataset.f; if (k === undefined) return; FV[k] = e.target.value; render(); });
+$('#th').addEventListener('change', e => { if (e.target.id === 'selall') { cur.forEach(x => e.target.checked ? sel.add(x.id) : sel.delete(x.id)); render(); } });
+$('#tb').addEventListener('change', e => { const id = +e.target.dataset.id; if (!id) return; e.target.checked ? sel.add(id) : sel.delete(id); render(); });
+$('#trb').addEventListener('click', () => { showTr = !showTr; render(); });
+$('#ecsv').addEventListener('click', () => exportAs('csv')); $('#ejson').addEventListener('click', () => exportAs('json'));
 $('#cands').addEventListener('click', e => { const id = e.target.dataset.id; if (id) go(raw0, id); });
 $('#f').addEventListener('submit', e => { e.preventDefault(); go($('#q').value.trim()); });
-$$('.av,#min,#hide,#sub,#gq,#unk,#grp,[data-f]').forEach(el => el.addEventListener('input', render));
+$$('.av,#min,#hide,#sub,#gq,#unk,#grp').forEach(el => el.addEventListener('input', () => rows.length && render()));
 document.addEventListener('keydown', e => { if (e.key === '/' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); $('#q').focus(); } });
 $('#hist').innerHTML = ld('hist', []).map(x => `<option value="${esc(x)}">`).join('');
-drawServices(); typeUI();
+drawServices(); drawCols(); drawHead(); typeUI();
 const hm = location.hash.match(/q=([^&]+)/); if (hm) { $('#q').value = decodeURIComponent(hm[1]); go($('#q').value); }
 </script>
 </body>
