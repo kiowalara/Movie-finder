@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Filmsuche</title>
+<style>
+:root{--bg:#f4f2ec;--panel:#fffefb;--fg:#1f2428;--mut:#69727a;--line:#ddd9ce;--side:#e9e6dd;--dot:rgba(0,0,0,.09);
+--c1:#0e7c72;--c2:#2f6fdb;--c3:#7a4fd3;--c4:#bf7a05;--c5:#5b6670;--ok:#1f8a4c;--warn:#b45309;--err:#b42318;
+--grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.1'/%3E%3C/svg%3E")}
+@media(prefers-color-scheme:dark){:root{--bg:#121618;--panel:#1b2124;--fg:#e6eaea;--mut:#8d989e;--line:#2c3539;--side:#171c1e;--dot:rgba(255,255,255,.07);
+--c1:#4cc2b6;--c2:#7aa7ff;--c3:#b69cff;--c4:#f0a437;--c5:#9aa6ae;--ok:#4cc58a;--warn:#f0a437;--err:#f97066}}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;display:grid;grid-template-columns:310px 1fr;height:100vh}
+aside{background:var(--side);border-right:1px solid var(--line);padding:12px;overflow:auto}
+main{display:flex;flex-direction:column;min-width:0;height:100vh;overflow:hidden}
+.card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--cc);border-radius:10px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.card>summary{padding:9px 12px;font-weight:700;cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;background:color-mix(in srgb,var(--cc) 11%,var(--panel))}
+.card>summary::-webkit-details-marker{display:none}
+.card>summary::after{content:'▾';margin-left:auto;color:var(--cc);transition:transform .15s}
+.card:not([open])>summary::after{transform:rotate(-90deg)}
+.body{padding:10px 12px}
+.group{border:1px dashed var(--c3);border-radius:8px;padding:8px 10px;margin:8px 0;background:color-mix(in srgb,var(--c3) 7%,transparent)}
+.group>b{font-size:12px;color:var(--c3)}
+label{display:block;padding:2px 0}.srow{display:flex;align-items:center}.srow label{flex:1}
+.m{color:var(--mut);font-size:12px}
+button,input,select{font:inherit;color:inherit}
+input,select{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%;margin:3px 0}
+input[type=checkbox]{width:auto;margin:0 6px 0 0}
+button{background:var(--c1);color:var(--bg);border:0;border-radius:6px;padding:7px 14px;cursor:pointer;font-weight:600}
+button.ghost{background:none;color:var(--fg);border:1px solid var(--line);padding:4px 10px;font-weight:500}
+button.wide{width:100%;margin-bottom:8px}
+button.x{background:none;color:var(--mut);padding:0 6px;font-size:16px}button.x:disabled{opacity:.25;cursor:default}
+button.q{width:18px;height:18px;border-radius:50%;border:1px solid var(--mut);background:none;color:var(--mut);font-size:11px;padding:0;font-weight:700;margin-left:6px}
+:focus-visible{outline:2px solid var(--c1);outline-offset:2px}
+form.top{display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--panel);position:relative;isolation:isolate}
+.bar{display:flex;gap:8px}form.top input{font-size:16px;margin:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;padding-top:8px}
+details summary{cursor:pointer}form.top summary{color:var(--c1)}
+.strip{display:flex;gap:10px;align-items:center;padding:7px 16px;border-bottom:1px solid var(--line)}
+.strip .lab{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);min-width:78px;font-weight:700}
+.strip div{display:flex;flex-wrap:wrap;gap:6px}
+#cw{background:color-mix(in srgb,var(--c3) 9%,var(--bg))}#sw{background:color-mix(in srgb,var(--c1) 5%,var(--bg))}
+.sug{border-radius:999px;padding:5px 14px;background:color-mix(in srgb,var(--c3) 17%,var(--panel));color:var(--c3);font-weight:700}
+.sug.on{background:var(--c3);color:var(--bg)}
+.svc{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);background:var(--panel);border-radius:5px;padding:2px 9px;font-size:12px;color:var(--fg);text-decoration:none}
+.svc .dot{width:8px;height:8px;border-radius:50%;background:var(--mut)}.svc.hit .dot{background:var(--ok)}.svc.err .dot{background:var(--err)}
+.svc.run .dot{background:var(--c4);animation:p 1s infinite}@keyframes p{50%{opacity:.25}}
+.svc.err{color:var(--err)}.svc b{font-variant-numeric:tabular-nums}
+.res{margin:12px 16px 16px;border:1px solid var(--line);border-radius:10px;background:var(--panel);display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+.tools{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--c1) 6%,var(--panel));flex-wrap:wrap}
+.tools .sp{flex:1}
+.wrap{overflow:auto;flex:1}table{border-collapse:collapse;width:100%}
+th{position:sticky;top:0;background:var(--panel);text-align:left;font-weight:600;color:var(--mut);padding:8px 12px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none;z-index:1}
+th.sorted{color:var(--fg);font-weight:800;background:color-mix(in srgb,var(--c1) 10%,var(--panel));box-shadow:inset 0 -2px var(--c1)}
+.ar{color:var(--c1);margin-left:5px}
+#th tr+tr th{position:static;cursor:default;padding:0 12px 8px;background:var(--panel)}#th input{margin:0;font-size:13px;padding:4px 6px;min-width:70px}
+.ck{width:34px;padding-right:0!important}
+td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:hover td{background:color-mix(in srgb,var(--c1) 5%,var(--panel))}tr.sel td{background:color-mix(in srgb,var(--c2) 11%,var(--panel))}
+td a{color:var(--c1);text-decoration:none;font-weight:500}td a:hover{text-decoration:underline}
+tr.sub td[data-c=title]{padding-left:28px;color:var(--mut)}
+.tag{border-radius:6px;padding:1px 8px;font-size:12px;font-weight:600;color:var(--t,var(--mut));background:color-mix(in srgb,var(--t,var(--mut)) 15%,transparent)}
+.av-stream{--t:var(--ok)}.av-miete{--t:var(--c4)}.av-bibliothek{--t:var(--c3)}.w{color:var(--warn)}
+.rel{display:inline-block;width:46px;height:6px;background:var(--line);border-radius:3px;overflow:hidden;vertical-align:middle}.rel i{display:block;height:100%;background:var(--c1)}
+.pop{position:fixed;z-index:30;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;box-shadow:0 8px 28px rgba(0,0,0,.25);font-size:13px}
+.pop ul{margin:6px 0 0;padding-left:18px}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--fg);width:min(420px,92vw);padding:18px}
+dialog::backdrop{background:rgba(0,0,0,.4)}dialog h3{margin:0 0 8px}
+@media(max-width:800px){body{grid-template-columns:1fr;height:auto}main{height:auto;overflow:visible}aside{border-right:0;border-bottom:1px solid var(--line)}}
+
+
+/* ---- Eleganz und eine einzige Textur (Höhenlinien) ---- */
+:root{--serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--to:.2;--topo:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420' fill='none' stroke='%23000' stroke-width='.5'%3E%3Cpath d='M133 148Q134 150 133 151Q132 152 131 153Q129 154 128 153Q126 152 126 150Q127 148 128 148Q129 147 131 147Q133 147 133 148Z'/%3E%3Cpath d='M138 146Q139 150 137 153Q135 155 131 157Q128 159 125 156Q122 154 122 150Q122 147 125 145Q128 143 132 143Q137 142 138 146Z'/%3E%3Cpath d='M142 144Q143 150 140 154Q137 158 132 161Q127 163 122 159Q117 156 118 150Q118 145 123 142Q127 140 134 139Q140 138 142 144Z'/%3E%3Cpath d='M146 142Q148 150 144 156Q140 161 133 165Q126 168 119 163Q112 158 113 150Q114 143 120 139Q126 136 135 135Q144 134 146 142Z'/%3E%3Cpath d='M150 140Q153 150 148 157Q142 164 133 168Q124 173 116 166Q108 160 109 150Q110 141 118 137Q126 132 136 131Q147 130 150 140Z'/%3E%3Cpath d='M154 138Q158 150 151 159Q145 167 134 172Q123 177 113 170Q103 162 104 151Q106 139 115 134Q125 128 138 127Q151 126 154 138Z'/%3E%3Cpath d='M158 136Q162 150 155 160Q147 170 135 176Q122 182 110 173Q99 164 100 151Q101 137 113 131Q124 125 139 123Q154 122 158 136Z'/%3E%3Cpath d='M165 135Q167 150 160 160Q153 171 141 179Q130 187 117 181Q103 175 96 162Q90 150 97 139Q105 127 118 124Q130 120 146 120Q162 120 165 135Z'/%3E%3Cpath d='M171 135Q172 150 165 161Q158 172 148 180Q137 189 123 187Q108 185 98 175Q87 164 89 151Q91 137 101 128Q111 119 124 117Q137 114 153 117Q169 120 171 135Z'/%3E%3Cpath d='M176 135Q177 150 170 161Q163 172 154 181Q144 189 129 192Q114 194 103 185Q91 176 85 163Q79 150 87 138Q94 126 106 120Q117 114 131 111Q145 109 160 114Q176 119 176 135Z'/%3E%3Cpath d='M182 135Q181 150 175 161Q169 173 159 181Q150 189 136 195Q122 201 109 194Q96 186 86 175Q76 165 78 151Q80 136 89 126Q98 116 111 113Q124 110 138 107Q153 104 167 111Q182 119 182 135Z'/%3E%3Cpath d='M187 135Q186 150 180 162Q174 173 164 182Q155 190 142 198Q130 206 115 201Q101 197 90 187Q79 177 74 164Q69 150 76 138Q83 125 94 117Q104 109 117 107Q130 105 146 102Q162 99 175 109Q188 119 187 135Z'/%3E%3Cpath d='M192 135Q191 150 185 162Q179 174 170 182Q160 190 149 199Q138 208 122 207Q107 206 95 197Q84 188 74 176Q65 165 67 151Q69 136 78 125Q87 115 99 109Q111 103 124 101Q137 99 154 98Q171 96 182 108Q193 120 192 135Z'/%3E%3Cpath d='M197 135Q196 150 190 162Q184 174 175 182Q165 191 155 200Q145 209 129 212Q114 215 101 206Q88 198 77 188Q67 178 63 164Q59 150 65 137Q72 124 82 115Q92 106 104 102Q117 99 131 96Q144 93 162 93Q179 93 189 107Q198 120 197 135Z'/%3E%3Cpath d='M202 135Q200 150 195 162Q189 174 180 183Q171 192 161 200Q151 209 136 215Q122 221 108 214Q93 208 82 199Q71 189 62 177Q54 165 56 150Q59 136 67 125Q76 114 87 106Q98 99 111 96Q124 94 138 91Q152 88 170 90Q187 92 195 106Q204 120 202 135Z'/%3E%3Cpath d='M207 135Q205 150 200 162Q194 175 185 183Q176 192 166 201Q157 209 143 217Q130 225 115 221Q99 218 88 209Q76 200 65 189Q55 179 51 164Q48 150 55 137Q61 124 71 114Q80 104 92 98Q104 93 117 91Q130 89 145 86Q160 82 178 86Q195 90 202 105Q209 120 207 135Z'/%3E%3Cpath d='M212 135Q210 150 205 162Q200 175 190 184Q181 193 172 201Q162 210 150 218Q138 227 122 227Q106 227 94 218Q81 210 70 200Q59 191 51 178Q43 165 46 150Q48 136 56 124Q65 113 75 104Q85 95 98 92Q111 88 124 86Q137 84 153 81Q169 78 186 84Q202 89 208 105Q214 120 212 135Z'/%3E%3Cpath d='M217 136Q215 150 210 162Q205 174 197 183Q189 192 180 200Q171 207 161 216Q151 225 136 230Q122 235 108 230Q94 226 83 217Q72 208 61 199Q51 189 44 177Q38 164 40 150Q42 137 50 125Q58 114 67 105Q76 96 88 91Q99 86 112 84Q124 83 137 80Q150 77 167 75Q184 74 198 83Q211 92 215 107Q219 122 217 136Z'/%3E%3Cpath d='M222 136Q219 150 215 162Q210 174 202 183Q194 193 185 200Q176 208 166 217Q157 225 143 232Q130 239 115 237Q100 235 88 226Q76 218 66 209Q55 200 46 189Q37 178 35 164Q33 150 38 137Q44 124 53 114Q61 104 71 96Q81 88 93 85Q106 81 118 79Q130 78 144 74Q158 71 175 71Q192 71 205 81Q218 91 221 107Q224 122 222 136Z'/%3E%3Cpath d='M226 136Q224 150 220 162Q215 174 207 184Q199 193 190 201Q181 209 171 217Q162 226 150 234Q137 242 122 242Q107 242 94 235Q81 228 70 219Q60 210 49 200Q39 190 33 177Q27 164 29 150Q32 136 39 125Q47 113 56 104Q65 94 76 88Q87 81 99 79Q112 77 124 75Q136 73 151 69Q166 66 183 67Q200 69 212 80Q224 91 226 107Q229 122 226 136Z'/%3E%3Cpath d='M231 136Q229 150 224 162Q220 174 212 184Q204 194 195 202Q186 209 177 218Q168 226 156 235Q145 243 130 246Q115 249 101 243Q86 238 75 229Q64 220 54 211Q43 201 34 190Q25 178 24 164Q22 150 28 137Q34 124 42 113Q50 103 60 94Q69 85 81 80Q93 75 105 74Q118 72 130 70Q143 67 159 64Q174 61 191 64Q208 67 219 79Q230 91 232 107Q234 122 231 136Z'/%3E%3Cpath d='M303 288Q304 290 303 291Q302 293 301 293Q299 294 298 293Q296 292 296 290Q296 288 298 288Q299 287 301 287Q303 287 303 288Z'/%3E%3Cpath d='M307 287Q309 290 307 293Q305 296 301 297Q298 299 295 296Q292 293 292 290Q292 286 295 285Q298 283 302 283Q306 283 307 287Z'/%3E%3Cpath d='M311 285Q314 290 311 294Q308 299 302 301Q297 303 292 299Q288 295 288 290Q288 284 292 282Q297 279 303 279Q309 279 311 285Z'/%3E%3Cpath d='M316 283Q318 290 314 296Q310 302 303 305Q296 308 290 303Q284 297 283 290Q283 283 290 279Q296 275 304 275Q313 275 316 283Z'/%3E%3Cpath d='M320 281Q323 290 318 298Q313 305 304 309Q294 313 287 306Q279 299 279 290Q279 281 287 276Q295 271 306 271Q316 272 320 281Z'/%3E%3Cpath d='M324 279Q328 290 322 299Q316 308 304 313Q293 317 284 309Q275 301 275 290Q274 279 284 273Q294 267 307 267Q319 268 324 279Z'/%3E%3Cpath d='M328 277Q333 290 326 301Q318 311 305 317Q292 322 281 312Q271 303 270 290Q270 277 282 270Q293 263 308 264Q323 264 328 277Z'/%3E%3Cpath d='M334 276Q338 290 331 301Q324 312 312 318Q300 325 286 321Q272 316 266 303Q261 290 268 279Q276 268 288 263Q300 257 315 260Q331 262 334 276Z'/%3E%3Cpath d='M340 275Q342 290 335 301Q328 312 318 319Q307 327 292 327Q276 328 268 315Q261 303 260 290Q259 276 270 268Q282 261 294 257Q307 253 323 257Q338 260 340 275Z'/%3E%3Cpath d='M346 275Q347 290 340 301Q333 312 323 320Q314 329 299 332Q284 336 272 326Q261 316 256 303Q251 290 257 278Q264 266 275 259Q287 253 301 251Q314 249 330 254Q346 259 346 275Z'/%3E%3Cpath d='M352 274Q352 290 345 301Q337 312 329 321Q320 330 306 335Q292 340 278 335Q263 329 257 316Q250 303 249 290Q247 276 259 267Q270 258 282 252Q293 246 308 246Q322 246 337 252Q353 259 352 274Z'/%3E%3Cpath d='M358 274Q357 290 349 301Q342 312 334 322Q326 332 313 337Q300 343 284 342Q268 341 260 328Q251 316 246 303Q240 290 246 277Q251 264 263 257Q275 251 288 246Q300 241 315 242Q330 243 345 251Q360 258 358 274Z'/%3E%3Cpath d='M364 274Q362 290 354 301Q346 312 339 322Q332 332 320 339Q307 345 291 347Q276 349 264 339Q252 329 246 316Q240 304 238 290Q237 276 247 266Q258 256 269 249Q281 243 294 240Q307 236 322 238Q338 240 352 249Q366 258 364 274Z'/%3E%3Cpath d='M369 274Q366 290 359 301Q351 312 344 323Q337 333 326 340Q314 347 299 351Q284 354 269 348Q255 342 248 329Q241 316 236 303Q230 290 235 277Q239 263 251 256Q264 248 275 242Q287 236 300 234Q314 232 330 235Q346 237 359 248Q372 258 369 274Z'/%3E%3Cpath d='M375 274Q371 290 363 301Q355 313 349 323Q343 333 332 341Q321 349 306 353Q292 358 276 356Q260 353 251 341Q241 329 235 317Q230 304 228 290Q226 276 236 264Q245 253 257 247Q269 240 281 235Q293 230 307 229Q322 229 338 232Q354 235 366 247Q378 258 375 274Z'/%3E%3Cpath d='M380 274Q376 290 368 301Q360 313 354 323Q348 334 337 342Q327 350 314 355Q300 361 284 361Q268 362 255 352Q243 343 237 330Q230 316 225 303Q220 290 224 276Q228 262 240 254Q252 245 263 239Q274 233 287 229Q300 224 315 225Q329 225 345 229Q362 233 373 246Q384 258 380 274Z'/%3E%3Cpath d='M385 274Q381 290 373 301Q364 313 358 323Q352 334 343 343Q333 351 320 357Q307 363 292 366Q276 368 261 362Q246 355 239 342Q231 329 225 317Q220 304 218 290Q216 275 224 264Q233 252 245 245Q257 238 269 232Q280 226 294 223Q307 220 322 221Q337 222 353 227Q370 232 380 245Q390 258 385 274Z'/%3E%3Cpath d='M390 275Q386 290 378 301Q370 312 364 322Q358 332 351 341Q343 350 331 356Q320 363 306 367Q293 371 277 371Q262 371 250 361Q238 352 231 340Q225 327 220 315Q214 303 212 290Q210 276 218 264Q225 253 237 245Q248 238 259 232Q270 226 282 222Q293 217 307 216Q320 216 335 218Q350 220 365 226Q380 232 388 246Q395 260 390 275Z'/%3E%3Cpath d='M333 79Q334 80 333 81Q333 83 331 83Q329 83 328 82Q327 81 326 80Q326 78 327 77Q329 77 331 77Q332 77 333 79Z'/%3E%3Cpath d='M337 77Q339 80 338 83Q336 87 332 87Q328 88 325 85Q323 83 322 80Q321 76 324 74Q328 73 332 73Q335 74 337 77Z'/%3E%3Cpath d='M341 75Q345 80 342 85Q339 90 333 91Q327 92 323 88Q319 85 317 79Q316 74 321 71Q327 69 333 70Q338 71 341 75Z'/%3E%3Cpath d='M345 74Q350 80 346 87Q342 94 334 95Q326 96 320 91Q315 87 313 79Q311 71 318 68Q326 65 334 66Q341 67 345 74Z'/%3E%3Cpath d='M349 72Q355 80 350 89Q345 97 335 99Q325 100 318 94Q311 89 308 79Q306 69 315 65Q325 61 335 63Q344 64 349 72Z'/%3E%3Cpath d='M353 70Q360 80 354 90Q348 101 336 102Q324 104 315 97Q307 90 304 79Q300 67 312 62Q324 57 335 59Q347 61 353 70Z'/%3E%3Cpath d='M357 69Q365 80 358 92Q351 104 337 106Q323 108 313 100Q303 92 299 78Q295 65 309 59Q323 53 336 55Q349 58 357 69Z'/%3E%3Cpath d='M363 68Q370 80 364 93Q358 105 344 109Q330 113 318 107Q306 102 297 91Q287 80 295 67Q302 54 316 52Q330 50 343 53Q357 55 363 68Z'/%3E%3Cpath d='M370 67Q375 80 369 93Q364 106 350 111Q337 116 323 114Q310 112 301 102Q292 93 287 78Q283 64 296 56Q309 47 323 48Q336 48 350 51Q364 54 370 67Z'/%3E%3Cpath d='M376 66Q380 80 375 93Q370 106 357 113Q344 120 330 120Q316 120 306 111Q296 103 286 91Q276 80 282 66Q288 52 302 47Q316 42 329 44Q342 46 357 49Q371 52 376 66Z'/%3E%3Cpath d='M382 66Q385 80 380 93Q375 107 363 115Q351 123 337 124Q323 125 311 119Q299 113 290 103Q281 93 276 79Q270 64 283 53Q295 43 309 40Q323 38 336 41Q348 43 363 47Q378 51 382 66Z'/%3E%3Cpath d='M58 359Q59 360 58 362Q58 363 56 363Q54 364 53 363Q51 362 52 360Q52 359 53 357Q54 356 56 357Q57 357 58 359Z'/%3E%3Cpath d='M62 357Q64 360 62 363Q61 367 57 367Q53 368 50 366Q47 363 47 360Q48 357 50 354Q53 351 56 353Q60 354 62 357Z'/%3E%3Cpath d='M65 356Q68 360 66 365Q64 370 58 371Q52 372 47 369Q43 365 43 360Q44 355 48 350Q52 346 57 349Q63 351 65 356Z'/%3E%3Cpath d='M69 354Q73 360 70 367Q67 374 59 375Q51 377 45 372Q39 367 39 360Q40 353 45 347Q50 341 58 344Q65 348 69 354Z'/%3E%3Cpath d='M73 352Q78 360 74 369Q70 377 60 379Q50 381 42 375Q35 369 35 360Q36 351 42 344Q49 336 59 340Q68 345 73 352Z'/%3E%3Cpath d='M77 351Q82 360 78 371Q73 381 61 383Q49 386 40 378Q30 371 31 360Q32 350 40 340Q48 331 59 336Q71 342 77 351Z'/%3E%3Cpath d='M80 349Q87 360 82 372Q76 385 62 387Q48 390 37 381Q26 373 27 360Q28 348 37 337Q47 326 60 332Q74 338 80 349Z'/%3E%3Cpath d='M85 349Q91 360 87 373Q82 385 69 390Q55 396 41 391Q26 386 25 373Q24 360 26 347Q28 335 41 327Q55 319 67 329Q78 339 85 349Z'/%3E%3C/svg%3E")}
+html[data-tex=strong]{--to:.38}
+html[data-tex=off] .card::before,html[data-tex=off] form.top::before{display:none}
+aside{padding:16px 14px}
+.brand{display:flex;align-items:center;justify-content:space-between;padding:0 4px 14px;font:italic 600 24px var(--serif);letter-spacing:.01em}
+.brand .x{font-size:20px;font-style:normal}
+.card{border:1px solid var(--line);border-radius:12px;position:relative;isolation:isolate;box-shadow:none;background:linear-gradient(color-mix(in srgb,var(--cc) 8%,transparent) 0 42px,transparent 42px),var(--panel)}
+.card>summary{background:transparent;font:600 15px var(--serif);letter-spacing:.015em;padding:11px 14px}
+.card>summary::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--cc)}
+.card:nth-of-type(2){--mp:-130px -70px}.card:nth-of-type(3){--mp:-260px -210px}
+.card::before,form.top::before{content:'';position:absolute;left:0;right:0;top:0;height:42px;z-index:-1;pointer-events:none;background:var(--cc,var(--c1));opacity:var(--to);-webkit-mask:var(--topo) var(--mp,0 0)/420px 420px;mask:var(--topo) var(--mp,0 0)/420px 420px}
+form.top{padding:18px 20px;--mp:-60px -160px}form.top::before{height:100%}
+form.top input{border-radius:12px;padding:11px 16px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+button{border-radius:10px}
+.res{border-radius:14px;margin:14px 20px 20px}
+th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:10px 14px}th[draggable=true]{cursor:grab}th.sorted{font-weight:800}
+td{padding:10px 14px}tr.sub td[data-c=title]{padding-left:30px}
+.tag{border-radius:999px}.strip{padding:8px 20px}
+dialog.wide{width:min(480px,94vw);max-height:90vh;overflow:auto}dialog h3{font:600 20px var(--serif)}
+</style>
+</head>
+<body>
+<aside>
+  <div class="brand"><span>Filmsuche</span><button type="button" class="x" id="gear" aria-label="Einstellungen" title="Einstellungen">⚙</button></div>
+  <details class="card p1" style="--cc:var(--c1)" open><summary>Dienste</summary><div class="body">
+    <button type="button" class="wide" id="addbtn">+ Dienst hinzufügen</button>
+    <div id="sv"></div>
+  </div></details>
+  <details class="card p2" style="--cc:var(--c2)" open><summary>Verfügbarkeit</summary><div class="body">
+    <label><input type="checkbox" class="av" value="stream" checked><span class="tag av-stream">Stream</span> sofort ansehbar</label>
+    <label><input type="checkbox" class="av" value="miete" checked><span class="tag av-miete">Miete/Kauf</span> online</label>
+    <label><input type="checkbox" class="av" value="bibliothek" checked><span class="tag av-bibliothek">Bibliothek</span> ausleihbar</label>
+  </div></details>
+  <details class="card p3" style="--cc:var(--c3)" open><summary>Treffer eingrenzen<button type="button" class="q" data-help="filter" aria-label="Hilfe zu den Filtern">?</button></summary><div class="body">
+    <input id="gq" placeholder="In allen Spalten suchen">
+    <label><input type="checkbox" id="unk" checked>Unbekannte Werte zeigen</label>
+    <label><input type="checkbox" id="grp" checked>Gleiche Filme zusammenfassen</label>
+    <label><input type="checkbox" id="sub">Nur mit Untertiteln</label>
+    <div class="group"><b>Länge</b>
+      <label for="min">Mindestlänge in Minuten</label><input id="min" type="number" min="0" value="60">
+      <label><input type="checkbox" id="hide">Kürzere Treffer ausblenden</label>
+    </div>
+  </div></details>
+  </aside>
+<main>
+  <form class="top" id="f">
+    <div class="bar"><input id="q" list="hist" placeholder="Filmtitel, z. B. Außer Atem 1960   ( / drücken zum Suchen )" autofocus required><button>Suchen</button></div>
+    <datalist id="hist"></datalist>
+    <details id="adv"><summary>Erweiterte Suche</summary>
+      <div class="grid"><input id="ad" placeholder="Regisseur"><input id="ay" placeholder="Jahr oder 1990-1999"><input id="ac" placeholder="Land, z. B. Frankreich"></div>
+      <div class="m">Auch direkt in der Suchleiste: regie:godard jahr:1960 land:frankreich laenge:&gt;80 sprache:de. Eine Jahreszahl am Ende zählt nur als Hinweis.</div>
+    </details>
+  </form>
+  <div class="strip" id="cw" hidden><span class="lab">Meintest du</span><div id="cands"></div></div>
+  <div class="strip" id="sw" hidden><span class="lab">Quellen</span><div id="stat"></div></div>
+  <section class="res">
+    <div class="tools"><span id="info">Gib einen Titel ein. Mit TMDB-Key erkennt die Suche den Film und sucht auch unter Original- und deutschem Titel.</span><span class="sp"></span>
+      <button type="button" class="ghost" id="trb" hidden></button><button type="button" class="ghost" id="colbtn">Spalten ▾</button><span id="nsel" class="m"></span>
+      <button type="button" class="ghost" id="ecsv" title="Auswahl (oder alle sichtbaren Treffer) als CSV speichern">CSV</button>
+      <button type="button" class="ghost" id="ejson" title="Auswahl (oder alle sichtbaren Treffer) als JSON speichern">JSON</button></div>
+    <div class="wrap"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
+  </section>
+</main>
+<dialog id="dlg"><h3 id="sdt">Dienst hinzufügen</h3>
+  <form id="add">
+    <input id="n" placeholder="Name" required>
+    <select id="t">
+      <option value="tmdb">Streaminganbieter (via TMDB)</option><option value="mediathek">Mediathek-Sender</option>
+      <option value="youtube">YouTube</option><option value="archive">archive.org</option><option value="ddg">Website per Domain</option>
+      <option value="html">Eigene Such-URL</option><option value="link">Katalog-Link (Bibliothek)</option>
+      <option value="siteindex">Seitenindex (Übersicht → Unterseiten)</option>
+    </select>
+    <input id="a"><div class="m" id="hint"></div>
+    <div class="tm"><input id="r" placeholder="Land, z. B. DE" maxlength="2"><label><input type="checkbox" id="so" checked>Nur aktuell streambar</label></div>
+    <input id="o" placeholder="Such-Link zum Öffnen, mit {q} (optional)">
+    <select id="v"><option value="stream">Stream</option><option value="miete">Miete/Kauf online</option><option value="bibliothek">Bibliothek (ausleihbar)</option></select>
+    <div style="margin-top:10px"><button>Speichern</button> <button type="button" class="ghost" id="cx">Abbrechen</button></div>
+  </form>
+</dialog>
+<dialog id="pwdlg"><h3>Zugangsdaten entsperren</h3>
+  <form id="pwf"><div class="m">Im Repository liegt eine verschlüsselte Datei mit TMDB-Key und Proxy-URL. Gib dein Passwort ein.</div>
+    <input id="pw2" type="password" autocomplete="current-password" aria-label="Passwort" required><div class="m" id="pwmsg" style="color:var(--err)"></div>
+    <div style="margin-top:10px"><button>Entsperren</button> <button type="button" class="ghost" id="pwx">Später</button></div></form></dialog>
+<dialog id="setdlg" class="wide"><h3>Einstellungen</h3>
+    <label for="key">TMDB-API-Key (bleibt nur in diesem Browser)</label><input id="key" type="password" autocomplete="off">
+    <label for="px">Proxy-URL (Cloudflare Worker)</label><input id="px" placeholder="https://…workers.dev">
+    <div class="group"><b>Zugang mit Passwort</b>
+      <div class="m">Verschlüsselt TMDB-Key und Proxy-URL in einer Datei. Liegt sie im Repository, genügt auf jedem Gerät das Passwort.</div>
+      <input id="pw" type="password" placeholder="Passwort (lang, nur dafür benutzt)" autocomplete="new-password">
+      <button type="button" class="ghost" id="lock">Verschlüsselt speichern</button> <button type="button" class="ghost" id="unlock">Mit Passwort laden</button>
+    </div>
+    <label for="tex">Texturen</label><select id="tex"><option value="soft">Dezent</option><option value="strong">Kräftig</option><option value="off">Aus</option></select>
+    <button type="button" class="ghost" id="ex" style="margin-top:8px">Dienste exportieren</button>
+    <label class="m">Dienste importieren<input id="im" type="file" accept=".json"></label>
+    <button type="button" class="ghost" id="rs">Standarddienste wiederherstellen</button>
+  
+  <div class="m" style="margin-top:14px">Filmdaten: Diese Seite nutzt die TMDB-API, wird aber von TMDB weder unterstützt noch zertifiziert. Verfügbarkeitsdaten kommen über TMDB von JustWatch.</div>
+  <div style="margin-top:14px"><button type="button" id="setx">Schließen</button></div></dialog>
+<div id="colpop" class="pop" hidden><b>Spalten</b><div class="m">Häkchen zeigt oder versteckt, Pfeile verschieben. Du kannst auch die Überschriften in der Tabelle ziehen.</div>
+  <div id="cols"></div><button type="button" class="ghost" id="colreset" style="margin-top:8px">Zurücksetzen</button></div>
+<div id="pop" class="pop" hidden></div>
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const ld = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const G = q => 'https://www.google.com/search?q=' + encodeURIComponent(q);
+const AV = {stream: 'Stream', miete: 'Miete/Kauf', bibliothek: 'Bibliothek'};
+const COLS = [['score', 'Relevanz'], ['title', 'Titel'], ['service', 'Dienst'], ['avail', 'Verfügbarkeit'], ['year', 'Jahr'],
+  ['director', 'Regisseur'], ['country', 'Land'], ['note', 'Hinweis'], ['minutes', 'Länge (Min.)'], ['lang', 'Sprache'], ['subs', 'Untertitel'], ['action', 'Aktion']];
+const NUM = ['minutes', 'year', 'score'];
+const HINT = {tmdb: 'Anbietername bei TMDB, z. B. MUBI', mediathek: 'Sender, Komma-getrennt, z. B. ZDF,3SAT', youtube: 'Zusatz zur Suche, z. B. full movie',
+  archive: 'Kein Wert nötig', ddg: 'Domain, z. B. ubu.com (braucht Proxy)', html: 'Such-URL mit {q}', link: 'Katalog-URL mit {q}',
+  siteindex: 'Übersichtsseite, z. B. https://www.ubu.com/film/index.html (Proxy nötig)'};
+const D = (id, name, type, arg, avail, extra) => ({id, name, type, arg, avail, region: 'DE', stream_only: true, ...extra});
+const DEF = [
+  D('netflix', 'Netflix', 'tmdb', 'Netflix', 'stream', {open: 'https://www.netflix.com/search?q={q}'}),
+  D('mubi', 'Mubi', 'tmdb', 'MUBI', 'stream'), D('kanopy', 'Kanopy', 'tmdb', 'Kanopy', 'stream'),
+  D('bbc', 'BBC iPlayer', 'tmdb', 'BBC iPlayer', 'stream', {region: 'GB', open: 'https://www.bbc.co.uk/iplayer/search?q={q}'}),
+  D('ard', 'ARD', 'mediathek', 'ARD,BR,HR,MDR,NDR,RBB,SR,SWR,WDR,ONE', 'stream', {open: 'https://www.ardmediathek.de/suche/{q}'}),
+  D('zdf', 'ZDF', 'mediathek', 'ZDF,3SAT', 'stream', {open: 'https://www.zdf.de/suche?q={q}'}),
+  D('arte', 'Arte', 'mediathek', 'ARTE', 'stream', {open: 'https://www.arte.tv/de/search/?q={q}'}),
+  D('youtube', 'YouTube', 'youtube', 'full movie', 'stream', {open: 'https://www.youtube.com/results?search_query={q}'}),
+  D('archive', 'archive.org', 'archive', '', 'stream', {open: 'https://archive.org/search?query={q}'}),
+  D('rarefilmm', 'rarefilmm', 'html', 'https://rarefilmm.com/?s={q}', 'stream'),
+  D('ubuweb', 'UbuWeb', 'siteindex', 'https://www.ubu.com/film/index.html', 'stream', {open: 'https://www.google.com/search?q=site%3Aubu.com%2Ffilm+{q}'}), D('fya', 'Films for Action', 'ddg', 'filmsforaction.org', 'stream'),
+  D('afa', 'Anarchist Film Archive', 'ddg', 'anarchistfilmarchive.org', 'stream'),
+  D('worldcat', 'WorldCat (Bibliotheken)', 'link', 'https://search.worldcat.org/search?q={q}', 'bibliothek')];
+let S = ld('cfg', null) || {services: DEF, key: '', proxy: ''};
+const save = () => sv('cfg', S);
+S.services.forEach(s => { if ((s.id === 'ubuweb' || s.id === 'rarefilmm') && s.type === 'ddg') Object.assign(s, DEF.find(x => x.id === s.id)); });
+let rows = [], cands = [], stat = {}, Fq = {}, lastQ = '', raw0 = '', pickId = null, runId = 0, editId = null, sort = {k: 'score', d: -1}, errs = '';
+let off = new Set(ld('off', []));
+const IDX = {}; let showTr = false;
+
+// ---------- Textwerkzeuge: Normalisierung, Ähnlichkeit (Tippfehler-tolerant) ----------
+const TR = /\b(trailer|teaser|vorschau|promo)\b/i, FMT = /^(mp4|m4v|avi|mov|wmv|flv|mpg|mpeg|ogv|webm|stream|download|real|quicktime|video)$/i,
+  NAVR = /^(ubuweb|ubu|home|top|back|next|previous|index|film|films|ubu film)$/i;
+const NOISE = /\b(full movie|full film|film|movie|hd|1080p|720p|english subtitles|eng sub|subtitles|trailer|ganzer film)\b/g;
+const fold = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[øœæłđßþð]/g, c => ({'ø': 'o', 'œ': 'oe', 'æ': 'ae', 'ł': 'l', 'đ': 'd', 'ß': 'ss', 'þ': 'th', 'ð': 'd'}[c]));
+const norm = s => fold(s).replace(/&/g, ' and ').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+const clean = s => norm(s).replace(/\b(19|20)\d\d\b/g, ' ').replace(NOISE, ' ').replace(/\s+/g, ' ').trim();
+const sq = s => clean(s).replace(/ /g, '');
+const bi = s => { const m = new Map(); for (let i = 0; i < s.length - 1; i++) { const g = s.slice(i, i + 2); m.set(g, (m.get(g) || 0) + 1); } return m; };
+function dice(a, b) {
+  if (a === b) return 1; if (a.length < 2 || b.length < 2) return 0;
+  const A = bi(a), B = bi(b); let n = 0; for (const [g, c] of A) n += Math.min(c, B.get(g) || 0);
+  return 2 * n / (a.length + b.length - 2);
+}
+function simOf(r, c) {
+  const t = clean(r.title), tt = t.split(' ').filter(Boolean), tc = t.replace(/ /g, ''); let best = 0;
+  for (const v of c.variants) {
+    const q = clean(v), qc = q.replace(/ /g, ''), tk = q.split(' ').filter(Boolean), pen = .04 * Math.max(0, tt.length - tk.length - 1);
+    const cov = tk.filter(w => tt.some(x => x === w || x.startsWith(w))).length / (tk.length || 1);
+    best = Math.max(best, dice(t, q), dice(tc, qc), tc === qc ? 1 : 0, qc.length > 3 && tc.includes(qc) ? .85 - pen : 0, Math.max(0, cov * .85 - pen));
+  }
+  return best;
+}
+function score(r, c, sim) {
+  if (r.link) { r.why = 'Katalog-Link ohne Titel: fester Wert 35'; return 35; }
+  const wy = c.pick ? c.pick.year : (c.F.ysoft ? +c.F.y : null), p = [['Titel', Math.round(sim * 100)]];
+  if (r.year && wy) p.push(['Jahr', Math.abs(r.year - wy) <= 1 ? 12 : -25]);
+  if (r.minutes != null) p.push(['Länge', r.minutes < 40 ? -35 : r.minutes < 70 ? -12 : 6]);
+  p.push(['Art', {stream: 8, miete: 3, bibliothek: 0}[r.avail] || 0]); if (r.subs) p.push(['Untertitel', 4]);
+  r.why = p.map(([k, v]) => `${k} ${v > 0 && k !== 'Titel' ? '+' : ''}${v}`).join(' · ');
+  return Math.max(0, Math.min(100, p.reduce((a, x) => a + x[1], 0)));
+}
+
+// ---------- Suchsyntax: regie: jahr: land: laenge: sprache: ----------
+function parseQ(raw) {
+  const ops = {regie: 'd', director: 'd', jahr: 'y', year: 'y', land: 'c', country: 'c', laenge: 'len', 'länge': 'len', sprache: 'l', lang: 'l'}, F = {};
+  let t = raw.replace(/([\wäö]+):("([^"]*)"|\S+)/g, (m, k, v, q) => ops[k.toLowerCase()] ? (F[ops[k.toLowerCase()]] = q ?? v, ' ') : m);
+  t = t.replace(/\s+/g, ' ').trim();
+  const y = t.match(/^(.+?)[\s(]+((?:19|20)\d\d)\)?$/);
+  if (!F.y && y && +y[2] <= 2026) { t = y[1].trim(); F.y = y[2]; F.ysoft = true; }
+  return {text: t, F};
+}
+
+// ---------- Netzwerk: direkt, sonst über optionalen Proxy ----------
+async function fx(url, opt = {}, force) {
+  const px = S.proxy && S.proxy.replace(/\/$/, '') + '/?u=';
+  const go = async u => { const r = await fetch(u, opt); if (!r.ok) { const e = new Error('HTTP ' + r.status); e.http = 1; throw e; }
+    const b = await r.arrayBuffer();
+    const cs = (r.headers.get('content-type') || '').match(/charset=([\w-]+)/i)?.[1] || new TextDecoder('latin1').decode(b.slice(0, 2048)).match(/<meta[^>]+charset=["']?([\w-]+)/i)?.[1] || 'utf-8';
+    try { return new TextDecoder(cs).decode(b); } catch { return new TextDecoder().decode(b); } };
+  if (!force) try { return await go(url); } catch (e) { if (e.http) throw e; if (!px) throw new Error('Vom Browser blockiert (CORS), Proxy nötig'); }
+  if (!px) throw new Error('Proxy nötig (Einstellungen)');
+  return go(px + encodeURIComponent(url));
+}
+const tj = (p, q = '') => fx(`https://api.themoviedb.org/3${p}?api_key=${S.key}&language=de-DE${q}`).then(JSON.parse);
+const reg = new Intl.DisplayNames(['de'], {type: 'region'}), regEn = new Intl.DisplayNames(['en'], {type: 'region'});
+const yr = F => { const m = (F.y || '').match(/^(\d{4})(?:-(\d{4}))?$/); return m ? [+m[1], +(m[2] || m[1])] : null; };
+const vs = c => c.variants.slice(0, 3);
+const vars = (t, p) => { const m = new Map(); [t, p?.title, p?.original_title, fold(t) !== t.toLowerCase() && fold(t), t.includes(' ') && t.split(' ').length <= 3 && t.replace(/\s+/g, '')]
+  .forEach(x => x && !m.has(x.toLowerCase()) && m.set(x.toLowerCase(), x)); return [...m.values()].slice(0, 4); };
+const mins = t => { const p = (t || '').split(':').map(Number); return p.length && !p.some(isNaN) ? Math.round(p.reduce((a, x) => a * 60 + x, 0) / 60) : null; };
+const parseHtml = h => new DOMParser().parseFromString(h, 'text/html');
+
+// ---------- Adapter ----------
+const A = {
+  async tmdb(s, c) {
+    if (!S.key) throw new Error('TMDB-Key fehlt (Einstellungen)');
+    c.td ??= Promise.all((c.pick ? [c.pick] : cands.slice(0, 3)).map(m => tj('/movie/' + m.id, '&append_to_response=credits,watch/providers')));
+    const out = [], kinds = s.stream_only !== false ? [['flatrate', 'stream']] : [['flatrate', 'stream'], ['rent', 'miete'], ['buy', 'miete']];
+    for (const d of await c.td) {
+      const p = d['watch/providers']?.results?.[s.region || 'DE'] || {};
+      for (const [k, avail] of kinds) if ((p[k] || []).some(x => x.provider_name.toLowerCase().includes(s.arg.toLowerCase())))
+        out.push({title: d.title, url: p.link || 'https://www.themoviedb.org/movie/' + d.id, avail, minutes: d.runtime || null, lang: d.original_language,
+          year: d.release_date ? +d.release_date.slice(0, 4) : null, note: d.original_title !== d.title ? d.original_title : null,
+          director: (d.credits?.crew || []).filter(x => x.job === 'Director').map(x => x.name).join(', ') || null,
+          country: (d.production_countries || []).map(x => reg.of(x.iso_3166_1)).join(', ') || null,
+          cx: (d.production_countries || []).map(x => x.iso_3166_1 + ' ' + regEn.of(x.iso_3166_1)).join(' ')});
+    }
+    return out;
+  },
+  async mediathek(s, c) {
+    const ch = s.arg.split(',').map(x => x.trim().toUpperCase());
+    const res = await Promise.all(vs(c).map(async v => JSON.parse(await fx('https://mediathekviewweb.de/api/query', {method: 'POST', headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify({queries: [{fields: ['title', 'topic'], query: v}], sortBy: 'timestamp', sortOrder: 'desc', future: false, offset: 0, size: 80})})).result.results));
+    return res.flat().filter(r => ch.some(x => r.channel.toUpperCase().startsWith(x))).slice(0, 20).map(r => ({title: r.title, url: r.url_website || r.url_video,
+      minutes: r.duration ? Math.round(r.duration / 60) : null, lang: r.channel.includes('.') ? r.channel.split('.').pop().toLowerCase() : 'de',
+      subs: !!r.url_subtitle, sub_url: r.url_subtitle, note: r.channel}));
+  },
+  async archive(s, c) {
+    const y = !c.F.ysoft && yr(c.F), seen = new Map();
+    await Promise.all(vs(c).map(async v => {
+      const q = `title:(${v}) AND mediatype:movies` + (c.F.d ? ` AND creator:(${c.F.d})` : '') + (y ? ` AND year:[${y[0]} TO ${y[1]}]` : '');
+      const u = 'https://archive.org/advancedsearch.php?' + new URLSearchParams([['q', q], ['rows', 10], ['output', 'json'], ...['identifier', 'title', 'language', 'year', 'creator'].map(x => ['fl[]', x])]);
+      JSON.parse(await fx(u)).response.docs.forEach(d => seen.set(d.identifier, d));
+    }));
+    return Promise.all([...seen.values()].slice(0, 14).map(async d => {
+      const r = {title: d.title, url: 'https://archive.org/details/' + d.identifier, lang: typeof d.language === 'string' ? d.language : null,
+        year: /^\d{4}$/.test(d.year) ? +d.year : null, director: typeof d.creator === 'string' ? d.creator : null};
+      try {
+        const f = JSON.parse(await fx('https://archive.org/metadata/' + d.identifier)).files || [], L = f.map(x => +x.length).filter(n => n > 0);
+        r.minutes = L.length ? Math.round(Math.max(...L) / 60) : null; r.subs = f.some(x => /\.(srt|vtt)$/i.test(x.name));
+      } catch {}
+      return r;
+    }));
+  },
+  async youtube(s, c) {
+    const res = await Promise.all(vs(c).map(async v => {
+      const h = await fx('https://www.youtube.com/results?search_query=' + encodeURIComponent([v, c.F.d, s.arg].filter(Boolean).join(' ')) + '&sp=EgIQAQ%3D%3D', {}, true);
+      const data = JSON.parse(h.match(/ytInitialData\s*=\s*(\{.*?\});\s*<\/script>/s)[1]), vids = [];
+      (function w(o) { if (o && typeof o === 'object') { if (o.videoRenderer) vids.push(o.videoRenderer); else Object.values(o).forEach(w); } })(data);
+      return vids.slice(0, 12).map(x => ({title: x.title.runs[0].text, url: 'https://www.youtube.com/watch?v=' + x.videoId, minutes: mins(x.lengthText?.simpleText), note: x.ownerText?.runs?.[0]?.text}));
+    }));
+    return res.flat();
+  },
+  async ddg(s, c) {
+    const res = await Promise.all(c.variants.slice(0, 2).map(async v => {
+      const h = await fx('https://html.duckduckgo.com/html/?q=' + encodeURIComponent(`site:${s.arg} ${v} ${c.F.d || ''}`), {}, true);
+      return [...parseHtml(h).querySelectorAll('a.result__a')].slice(0, 8).map(a => ({title: a.textContent.trim(), url: new URL(a.getAttribute('href'), 'https://duckduckgo.com').searchParams.get('uddg') || a.href}));
+    }));
+    return res.flat();
+  },
+  async html(s, c) {
+    const res = await Promise.all(vs(c).map(async v => {
+      const url = s.arg.replace('{q}', encodeURIComponent(v)), q = sq(v);
+      return [...parseHtml(await fx(url)).querySelectorAll('a[href]')].map(a => ({title: a.textContent.trim(), url: new URL(a.getAttribute('href'), url).href}))
+        .filter(r => r.title && sq(r.title).includes(q)).slice(0, 10);
+    }));
+    return res.flat();
+  },
+  async siteindex(s, c) {
+    const idx = await getIdx(s), qs = c.variants.map(sq), out = [];
+    for (const it of idx.items) {
+      const d = sq(it.d || ''), ds = qs.some(q => q.length > 2 && d.includes(q)), ts = simOf({title: it.t}, c);
+      if (ts >= .55 || ds) out.push({title: it.t, url: it.u, director: it.d, _s: Math.max(ts, ds ? .6 : 0)});
+    }
+    return out.sort((a, b) => b._s - a._s).slice(0, 40);
+  },
+  async link(s, c) { return [{title: 'Katalog durchsuchen: ' + c.q, url: s.arg.replace('{q}', encodeURIComponent(c.q)), note: 'Bestand manuell prüfen', link: true}]; }
+};
+const openUrl = (s, q) => (s.open || (s.type === 'ddg' ? G(`site:${s.arg} {q}`) : s.type === 'html' || s.type === 'link' ? s.arg : G(s.name + ' {q}'))).replace('{q}', s.open || s.type === 'html' || s.type === 'link' ? encodeURIComponent(q) : q);
+
+// ---------- Metadaten aus dem Titel holen (Jahr, Regisseur, Länge, Untertitel) und Titel vereinheitlichen ----------
+const ROLE = "(?:directed by|dir\\.?|by|von|regie|r[ée]alis[ée]e? par|un film de|a film by|ein film von)";
+const STOP = /^(cut|edition|version|remastered|restored|director'?s?|trailer|part|teil|episode|film|movie|full|hd|uncut|complete|original|final|extended|collection|archive|archiv|documentary|dokumentation|short|kurzfilm|feature|official|clip|scene)\b/i;
+const NAME = /^\p{Lu}[\p{L}'’.-]+(?:\s+(?:(?:de|van|von|da|di|la|le|el|al)\s+)?\p{Lu}[\p{L}'’.-]+){1,2}$/u;
+const isName = s => NAME.test(s.trim()) && !STOP.test(s.trim());
+const flip = d => /^[^,\s]+,\s*[^,]+$/.test(d) ? d.split(',').reverse().map(x => x.trim()).join(' ') : d;
+function tcase(s) { const L = s.replace(/[^\p{L}]/gu, ''); return L.length > 3 && L === L.toUpperCase() ? s.toLowerCase().replace(/(^|[\s(:–-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()) : s; }
+function extract(r, s) {
+  if (r.link) return; let t = r.title.replace(/\s+/g, ' ').trim();
+  const grab = (re, fn) => { const m = t.match(re); if (m) { fn(m); t = t.replace(re, ' ').replace(/\s+/g, ' ').trim(); } };
+  grab(/[\[(]?\b(?:full (?:movie|film)|ganzer film|film complet)\b[\])]?/i, () => {});
+  grab(/[\[(]?\b(?:4k|1080p|720p|480p|hd)\b[\])]?/i, () => {});
+  grab(/[\[(]?\b(?:eng(?:lish)?\s*subs?(?:titles)?|subtitled|mit untertiteln)\b[\])]?/i, () => { if (r.subs == null) r.subs = true; });
+  grab(/\b(\d{2,3})\s?(?:min(?:utes|uten)?)\b/i, m => { if (r.minutes == null) r.minutes = +m[1]; });
+  grab(new RegExp('[(\\[]\\s*' + ROLE + '\\s+([^)\\]]+?)\\s*[)\\]]', 'i'), m => { r.director ||= m[1]; });
+  grab(/[(\[]([^)\]]*?)\b((?:19|20)\d\d)\b([^)\]]*)[)\]]/, m => {
+    r.year ||= +m[2];
+    const rest = flip((m[1] + ' ' + m[3]).replace(/\b(?:dir|directed by|by)\b\.?/gi, ' ').replace(/\s[-–—]\s|[;|/]+/g, ',').replace(/\s+/g, ' ').replace(/^[\s,]+|[\s,]+$/g, ''));
+    if (rest && isName(rest)) r.director ||= rest;
+  });
+  grab(new RegExp('[,\\s–—-]+' + ROLE + '\\s+(\\p{Lu}[^()]{2,40})$', 'iu'), m => { r.director ||= m[1].trim(); });
+  grab(/[\s,–—-]+((?:19|20)\d\d)$/, m => { r.year ||= +m[1]; });
+  if (['youtube', 'ddg', 'html'].includes(s.type)) { const m = t.match(/^(.{3,}?)\s+[–—-]\s+([^–—-]{5,40})$/); if (m && isName(m[2])) { r.director ||= m[2]; t = m[1]; } }
+  if (r.director) {
+    r.director = flip(r.director.trim());
+    const re = new RegExp('(^|[\\s–—-]+)' + r.director.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?=$|[\\s–—-])', 'i');
+    if (re.test(t) && t.replace(re, ' ').trim().length > 1) t = t.replace(re, ' ');
+  }
+  t = t.replace(/[(\[]\s*[)\]]/g, ' ').replace(/^[\s,;:–—|/-]+|[\s,;:–—|/-]+$/g, '').replace(/\s+/g, ' ');
+  if (t) r.title = tcase(t);
+}
+// ---------- Seitenindex: Übersichtsseite -> Unterseiten (langsam, einmalig, wird gespeichert) ----------
+let building = false;
+async function getIdx(s) {
+  if (!IDX[s.id]) {   // neuere Fassung gewinnt: Browser-Speicher oder Datei im Repository
+    const a = ld('idx:' + s.id, null); let b = null;
+    try { b = JSON.parse(await (await fetch('index-' + s.id + '.json')).text()); } catch {}
+    const best = [a, b].filter(x => x?.items).sort((p, q) => q.built - p.built)[0]; if (best) IDX[s.id] = best;
+  }
+  if (!IDX[s.id]) throw new Error('Index fehlt, links auf ⟳ klicken');
+  return IDX[s.id];
+}
+async function buildIndex(s) {
+  if (building) return; building = true;
+  const st = t => $('#info').textContent = t, u0 = new URL(s.arg), host = u0.hostname.replace(/^www\./, ''), dir = u0.pathname.replace(/[^/]*$/, '');
+  try {
+    st('Index: lese Übersichtsseite …');
+    const subs = new Map();
+    parseHtml(await fx(s.arg, {}, true)).querySelectorAll('a[href]').forEach(a => {
+      try {
+        const u = new URL(a.getAttribute('href'), s.arg); u.hash = ''; const t = a.textContent.trim().replace(/\s+/g, ' ');
+        if (u.hostname.replace(/^www\./, '') === host && u.pathname.startsWith(dir) && /\.html?$/i.test(u.pathname) && !/index\.html?$/i.test(u.pathname) && t && !NAVR.test(t)) subs.set(u.href, t);
+      } catch {}
+    });
+    const items = [], seen = new Set(), list = [...subs]; let n = 0;
+    for (const [u, name] of list) {
+      st(`Index: Seite ${++n} von ${list.length} (${name}) …`);
+      try {
+        parseHtml(await fx(u, {}, true)).querySelectorAll('a[href]').forEach(a => {
+          let t = a.textContent.trim().replace(/\s+/g, ' ');
+          if (FMT.test(t)) t = (a.parentElement?.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+          const h = new URL(a.getAttribute('href'), u); h.hash = '';
+          if (t.length < 2 || NAVR.test(t) || !/^https?:$/.test(h.protocol) || h.href === u || /(^|\/)(index\.html?)?$/i.test(h.pathname) || seen.has(h.href)) return;
+          seen.add(h.href); items.push({t, u: h.href, d: name});
+        });
+      } catch {}
+      await new Promise(r => setTimeout(r, 350));   // schonend für die Seite
+    }
+    const idx = {built: Date.now(), items}; IDX[s.id] = idx;
+    try { localStorage.setItem('idx:' + s.id, JSON.stringify(idx)); } catch { alert('Der Index ist zu groß für den Browserspeicher und gilt nur bis zum Neuladen. Nutze ⤓ und lege die Datei ins Repository.'); }
+    st(`Index fertig: ${items.length} Einträge aus ${list.length} Seiten.`); drawServices();
+  } finally { building = false; }
+}
+function expIdx(s) {
+  const i = IDX[s.id] || ld('idx:' + s.id, null); if (!i) return alert('Noch kein Index vorhanden.');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(i)], {type: 'application/json'})); a.download = 'index-' + s.id + '.json'; a.click();
+}
+
+// ---------- Suchablauf: Film erkennen, alle Dienste parallel, Ergebnisse live ----------
+async function go(raw, pick) {
+  raw0 = raw; pickId = pick || null;
+  const extra = [['ad', 'regie'], ['ay', 'jahr'], ['ac', 'land']].map(([i, k]) => $('#' + i).value.trim() ? `${k}:"${$('#' + i).value.trim()}"` : '').join(' ');
+  const {text, F} = parseQ(raw + ' ' + extra); if (!text) return;
+  const ids = $$('.sc:checked').map(x => x.value), chosen = S.services.filter(s => ids.includes(s.id));
+  if (!ids.length) { $('#info').textContent = 'Wähle mindestens einen Dienst aus.'; return; }
+  const my = ++runId; rows = []; cands = []; stat = {}; sel.clear(); Fq = F; lastQ = text; errs = '';
+  history.replaceState(null, '', '#q=' + encodeURIComponent(raw));
+  const h = [raw, ...ld('hist', []).filter(x => x !== raw)].slice(0, 20); sv('hist', h); $('#hist').innerHTML = h.map(x => `<option value="${esc(x)}">`).join('');
+  const c = {q: text, F, variants: vars(text), pick: null};
+  $('#info').textContent = 'Suche läuft …'; render(); drawStat();
+  if (S.key) try {
+    const y = yr(F), ys = y && y[0] === y[1] ? '&year=' + y[0] : '';
+    let r = await tj('/search/movie', '&query=' + encodeURIComponent(text) + ys);
+    if (!r.results.length && fold(text) !== text.toLowerCase()) r = await tj('/search/movie', '&query=' + encodeURIComponent(fold(text)) + ys);
+    cands = r.results.slice(0, 5).map(m => ({id: m.id, title: m.title, original_title: m.original_title, year: m.release_date ? +m.release_date.slice(0, 4) : null}));
+    const p = pick ? cands.find(x => x.id == pick) : cands[0];
+    if (p && (pick || Math.max(dice(norm(text), norm(p.title)), dice(norm(text), norm(p.original_title))) > .5)) {
+      c.pick = p; c.variants = vars(text, p);
+    }
+  } catch (e) { errs = `TMDB: ${esc(e.message)}`; }
+  if (my !== runId) return; drawCands(c);
+  if (c.pick) tj('/movie/' + c.pick.id + '/videos', '&include_video_language=de,en,null').then(v => my === runId && add({name: 'TMDB-Trailer', avail: 'stream', type: 'tmdb'},
+    v.results.filter(x => x.site === 'YouTube' && /Trailer|Teaser/.test(x.type)).slice(0, 3).map(x => ({title: c.pick.title + ' – ' + x.name, url: 'https://www.youtube.com/watch?v=' + x.key, year: c.pick.year, trailer: true})), c)).catch(() => {});
+  chosen.forEach(async s => {
+    stat[s.id] = {s, st: 'run'}; drawStat();
+    try { const out = await A[s.type](s, c); if (my !== runId) return; add(s, out, c); stat[s.id] = {s, st: 'ok', n: out.length}; }
+    catch (e) { if (my !== runId) return; stat[s.id] = {s, st: 'err', msg: e.message}; }
+    drawStat(); render();
+  });
+}
+function add(s, out, c) {
+  for (let r of out) {
+    r = {...r}; extract(r, s);
+    const m = r.title.match(/\b(19\d\d|20\d\d)\b/);
+    r = {minutes: null, lang: null, subs: null, sub_url: null, note: null, director: null, country: null, cx: '', year: null, avail: s.avail, ...r, service: s.name, id: ++uid};
+    r.trailer = r.trailer || TR.test(r.title) || (s.type === 'youtube' && r.minutes != null && r.minutes <= 5);
+    const sim = r.link ? 0 : simOf(r, c); r.score = score(r, c, sim);
+    r.gk = r.link ? 'zz-' + s.id : (c.pick && sim >= .8 ? sq(c.pick.title) : sq(r.title));
+    rows.push(r);
+  }
+  render();
+}
+function drawCands(c) {
+  $('#cw').hidden = cands.length < 2;
+  $('#cands').innerHTML = cands.map(x => `<button type="button" class="sug ${c.pick?.id === x.id ? 'on' : ''}" data-id="${x.id}">${esc(x.title)}${x.year ? ' (' + x.year + ')' : ''}</button>`).join('');
+}
+const rk = x => x.st === 'ok' ? x.n : x.st === 'run' ? -.5 : -1;
+function drawStat() {
+  const v = Object.values(stat).sort((a, b) => rk(b) - rk(a) || a.s.name.localeCompare(b.s.name));
+  $('#sw').hidden = !v.length;
+  $('#stat').innerHTML = v.map(({s, st, n, msg}) => `<a class="svc ${st === 'ok' && n ? 'hit' : st}" href="${esc(openUrl(s, lastQ))}" target="_blank" rel="noopener" title="${esc(msg || 'Auf der Seite selbst suchen')}"><i class="dot"></i>${esc(s.name)} <b>${st === 'ok' ? n : st === 'run' ? '…' : '!'}</b>${st === 'err' ? `<span class="m">${esc(msg)}</span>` : ''} ↗</a>`).join('');
+}
+
+// ---------- Tabelle ----------
+const KEYS = COLS.map(c => c[0]), LAB = Object.fromEntries(COLS), cs0 = ld('cols', {});
+let order = [...(cs0.order || []).filter(k => KEYS.includes(k)), ...KEYS.filter(k => !(cs0.order || []).includes(k))], hid = new Set(cs0.hide || []);
+if (!(cs0.order || []).includes('note')) { order.splice(order.indexOf('note'), 1); order.splice(order.indexOf('country') + 1, 0, 'note'); }
+const vis = () => order.filter(k => !hid.has(k)), saveCols = () => sv('cols', {order, hide: [...hid]});
+let FV = {}, cur = [], sel = new Set(), uid = 0;
+function match(x, k, f) {
+  f = fold(f.trim()); if (!f) return true;
+  const v = k === 'country' && x.country ? x.country + ' ' + x.cx : x[k];
+  if (v == null || v === '') return $('#unk').checked;
+  if (NUM.includes(k)) {
+    const n = +v; let m;
+    if (m = f.match(/^(\d+)\s*-\s*(\d+)$/)) return n >= +m[1] && n <= +m[2];
+    if (m = f.match(/^([<>]=?)\s*(\d+)$/)) { const t = +m[2]; return m[1] === '>' ? n > t : m[1] === '>=' ? n >= t : m[1] === '<' ? n < t : n <= t; }
+    return String(n).includes(f);
+  }
+  const s = fold(k === 'subs' ? (v ? 'ja' : 'nein') : k === 'avail' ? AV[v] : String(v));
+  return f.startsWith('!') ? !s.includes(f.slice(1)) : s.includes(f);
+}
+function action(x) {
+  if (x.avail === 'bibliothek') return '';
+  if (x.sub_url) return `<a href="${esc(x.sub_url)}" target="_blank" rel="noopener">Untertitel laden</a>`;
+  if (x.subs !== true) return `<a href="https://www.opensubtitles.org/en/search/sublanguageid-eng/moviename-${encodeURIComponent(lastQ)}" target="_blank" rel="noopener">EN-Untertitel suchen</a>`;
+  return '';
+}
+const dash = '<span class="m">–</span>';
+const CELL = {
+  score: x => `<span class="rel" title="${esc(x.why)}"><i style="width:${x.score}%"></i></span> <span class="m" title="${esc(x.why)}">${x.score}</span>`,
+  title: x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.trailer ? ' <span class="tag">Trailer</span>' : ''}`,
+  service: x => esc(x.service), avail: x => `<span class="tag av-${esc(x.avail)}">${AV[x.avail] || esc(x.avail)}</span>`,
+  year: x => x.year ?? dash, director: x => x.director ? esc(x.director) : dash, country: x => x.country ? esc(x.country) : dash,
+  note: x => x.note ? `<span class="m">${esc(x.note)}</span>` : dash,
+  minutes: (x, mn) => `${x.minutes ?? dash}${mn && x.minutes != null && x.minutes < mn ? ' <span class="w" title="Kürzer als die Mindestlänge, evtl. Trailer">kurz</span>' : ''}`,
+  lang: x => x.lang ? esc(x.lang) : dash, subs: x => x.subs ? 'ja' : x.subs === false ? 'nein' : dash, action: x => action(x)
+};
+function drawHead() {
+  const v = vis();
+  $('#th').innerHTML = '<tr><th class="ck"><input type="checkbox" id="selall" aria-label="Alle sichtbaren Treffer auswählen"></th>' + v.map(k => {
+    const on = sort.k === k;
+    return `<th data-col="${k}" draggable="true" title="Klicken zum Sortieren, ziehen zum Verschieben" ${k !== 'action' ? `data-k="${k}"` : ''} class="${on ? 'sorted' : ''}" ${on ? `aria-sort="${sort.d > 0 ? 'ascending' : 'descending'}"` : ''}>${LAB[k]}${on ? `<span class="ar">${sort.d > 0 ? '▲' : '▼'}</span>` : ''}${k === 'score' ? '<button type="button" class="q" data-help="rel" aria-label="Wie entsteht die Relevanz?">?</button>' : ''}</th>`;
+  }).join('') + '</tr><tr><th class="ck"></th>' + v.map(k => `<th>${k === 'action' ? '' : `<input data-f="${k}" value="${esc(FV[k] || '')}" placeholder="Filter" aria-label="Filter: ${LAB[k]}">`}</th>`).join('') + '</tr>';
+}
+function render() {
+  const av = $$('.av:checked').map(x => x.value), min = +$('#min').value || 0, g = fold($('#gq').value.trim());
+  const H = [['director', Fq.d], ['country', Fq.c], ['year', Fq.ysoft ? '' : Fq.y], ['minutes', Fq.len], ['lang', Fq.l]].filter(x => x[1]);
+  const fs = [...Object.entries(FV).filter(x => x[1].trim()), ...H];
+  const nt = rows.filter(x => x.trailer).length; $('#trb').hidden = !nt; $('#trb').textContent = (showTr ? 'Trailer ausblenden' : 'Trailer anzeigen') + ' (' + nt + ')';
+  let r = rows.filter(x => (showTr || !x.trailer) && av.includes(x.avail) && (!$('#sub').checked || x.subs) && !($('#hide').checked && min && x.minutes != null && x.minutes < min) &&
+    (!g || fold([x.service, x.title, x.director, x.country, x.lang, x.note].join(' ')).includes(g)) && fs.every(([k, f]) => match(x, k, f)));
+  const grp = $('#grp').checked && sort.k === 'score' && sort.d < 0;
+  if (grp) { const mx = {}; r.forEach(x => mx[x.gk] = Math.max(mx[x.gk] || 0, x.score)); r.sort((a, b) => mx[b.gk] - mx[a.gk] || (a.gk > b.gk ? 1 : a.gk < b.gk ? -1 : 0) || b.score - a.score); }
+  else r.sort((a, b) => { const A = a[sort.k] ?? '', B = b[sort.k] ?? ''; return (A > B ? 1 : A < B ? -1 : 0) * sort.d; });
+  cur = r; const v = vis(); let prev;
+  $('#tb').innerHTML = r.map(x => {
+    const sub = grp && x.gk === prev; prev = x.gk;
+    return `<tr class="${sub ? 'sub' : ''}${sel.has(x.id) ? ' sel' : ''}"><td class="ck"><input type="checkbox" data-id="${x.id}" ${sel.has(x.id) ? 'checked' : ''} aria-label="Treffer auswählen"></td>` +
+      v.map(k => `<td data-c="${k}">${CELL[k](x, min)}</td>`).join('') + '</tr>';
+  }).join('');
+  const n = r.filter(x => sel.has(x.id)).length; $('#nsel').textContent = n ? n + ' ausgewählt' : '';
+  const pending = Object.values(stat).some(x => x.st === 'run');
+  $('#info').innerHTML = `${r.length} von ${rows.length - (showTr ? 0 : nt)} Treffern für „${esc(lastQ)}“${pending ? ' (weitere Dienste laufen noch)' : ''}` +
+    (errs ? ` <span style="color:var(--err)">${errs}</span>` : '') + (!S.key ? ' · Tipp: Mit TMDB-Key wird der Film genauer erkannt.' : '');
+}
+// ---------- Export (Auswahl oder alle sichtbaren Treffer) ----------
+function dlFile(name, text, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type})); a.download = name; a.click(); }
+const plain = (x, k) => k === 'avail' ? AV[x.avail] || x.avail : k === 'subs' ? (x.subs ? 'ja' : x.subs === false ? 'nein' : '') : x[k] ?? '';
+function exportAs(kind) {
+  const R = cur.filter(x => sel.has(x.id)).length ? cur.filter(x => sel.has(x.id)) : cur, ks = vis().filter(k => k !== 'action');
+  if (!R.length) return alert('Keine Treffer zum Exportieren.');
+  const fn = 'filmsuche-' + (lastQ || 'ergebnisse').replace(/\W+/g, '-');
+  if (kind === 'json') return dlFile(fn + '.json', JSON.stringify(R.map(x => ({...Object.fromEntries(ks.map(k => [LAB[k], plain(x, k)])), Link: x.url})), null, 2), 'application/json');
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  dlFile(fn + '.csv', '\ufeff' + [[...ks.map(k => LAB[k]), 'Link'], ...R.map(x => [...ks.map(k => plain(x, k)), x.url])].map(r => r.map(q).join(';')).join('\r\n'), 'text/csv');
+}
+// ---------- Hilfe-Fenster (?) ----------
+const HELP = {
+  rel: `<b>So entsteht die Relevanz (0–100)</b><br>Sie zeigt, wie gut ein Treffer zu deiner Suche passt. Bewegst du die Maus über den Balken, siehst du die Rechnung für diesen Treffer.<ul>
+    <li><b>Titel:</b> Ähnlichkeit zum gesuchten Titel, 0–100. Leerzeichen, Akzente, Groß-/Kleinschreibung und kleine Tippfehler zählen kaum.</li>
+    <li><b>Jahr:</b> +12, wenn es zum erkannten Film passt (±1 Jahr), sonst −25. Nur wenn Jahr und Film bekannt sind.</li>
+    <li><b>Länge:</b> +6 ab 70 Min., −12 bei 40–69 Min., −35 darunter (meist Ausschnitt oder Trailer).</li>
+    <li><b>Art:</b> Stream +8, Miete/Kauf +3, Bibliothek 0.</li><li><b>Untertitel</b> vorhanden: +4.</li>
+    <li>Katalog-Links ohne Titel bekommen fest 35.</li></ul>`,
+  filter: `<b>Treffer eingrenzen</b><ul>
+    <li><b>Spaltenfilter:</b> Tippe unter eine Spaltenüberschrift. Text: enthält das Wort. <code>!Wort</code> schließt Treffer mit dem Wort aus.</li>
+    <li><b>Zahlen</b> (Länge, Jahr, Relevanz): <code>&gt;90</code>, <code>&lt;120</code>, <code>60-120</code> oder eine genaue Zahl.</li>
+    <li>Mehrere Filter gelten gleichzeitig. Das Feld hier sucht in allen Spalten auf einmal.</li>
+    <li><b>Unbekannte Werte zeigen:</b> Treffer mit „?“ in einer gefilterten Spalte bleiben sichtbar.</li>
+    <li>In der Suchleiste gehen außerdem <code>regie:</code> <code>jahr:</code> <code>land:</code> <code>laenge:</code> <code>sprache:</code>.</li></ul>`
+};
+document.addEventListener('click', e => {
+  if (!e.target.closest('#colpop,#colbtn')) $('#colpop').hidden = true;
+  const p = $('#pop'), q = e.target.closest('.q');
+  if (!q) { if (!e.target.closest('#pop')) p.hidden = true; return; }
+  e.preventDefault(); if (!p.hidden && p.dataset.k === q.dataset.help) { p.hidden = true; return; }
+  p.dataset.k = q.dataset.help; p.innerHTML = HELP[q.dataset.help]; p.hidden = false;
+  const b = q.getBoundingClientRect(); p.style.left = Math.max(8, Math.min(b.left, innerWidth - p.offsetWidth - 12)) + 'px'; p.style.top = Math.min(b.bottom + 6, innerHeight - p.offsetHeight - 8) + 'px';
+});
+// ---------- Dienste verwalten, Einstellungen ----------
+function typeUI() {
+  const t = $('#t').value; $('#hint').textContent = HINT[t]; $('#a').placeholder = HINT[t]; $('#a').disabled = t === 'archive';
+  $$('.tm').forEach(x => x.hidden = t !== 'tmdb');
+}
+function openForm(s) {
+  editId = s?.id || null; $('#n').value = s?.name || ''; $('#t').value = s?.type || 'ddg'; $('#a').value = s?.arg || ''; $('#r').value = s?.region || 'DE';
+  $('#so').checked = s ? s.stream_only !== false : true; $('#v').value = s?.avail || 'stream'; $('#o').value = s?.open || '';
+  $('#sdt').textContent = s ? 'Dienst bearbeiten: ' + s.name : 'Dienst hinzufügen'; typeUI(); $('#dlg').showModal();
+}
+function drawServices() {
+  $('#sv').innerHTML = S.services.map(s => {
+    const i = IDX[s.id] || ld('idx:' + s.id, null), si = s.type === 'siteindex';
+    return `<div class="srow"><label><input type="checkbox" class="sc" value="${esc(s.id)}" ${off.has(s.id) ? '' : 'checked'}>${esc(s.name)}</label>` +
+      (si ? `<button class="x" data-a="idx" data-id="${esc(s.id)}" aria-label="Index von ${esc(s.name)} aufbauen" title="Index aufbauen oder aktualisieren">⟳</button><button class="x" data-a="exp" data-id="${esc(s.id)}" aria-label="Index speichern" title="Index als Datei speichern">⤓</button>` : '') +
+      `<button class="x" data-a="edit" data-id="${esc(s.id)}" aria-label="${esc(s.name)} bearbeiten" title="Bearbeiten">✎</button>` +
+      `<button class="x" data-a="del" data-id="${esc(s.id)}" aria-label="${esc(s.name)} entfernen" title="Entfernen">×</button></div>` +
+      (si ? `<div class="m">${i?.items ? i.items.length + ' Einträge, Stand ' + new Date(i.built).toLocaleDateString('de') : 'noch kein Index'}</div>` : '');
+  }).join('');
+}
+function drawCols() {
+  $('#cols').innerHTML = order.map((k, i) => `<div class="srow"><label><input type="checkbox" data-col="${k}" ${hid.has(k) ? '' : 'checked'}>${LAB[k]}</label>` +
+    `<button type="button" class="x" data-mv="-1" data-k="${k}" aria-label="${LAB[k]} nach oben" ${i ? '' : 'disabled'}>↑</button>` +
+    `<button type="button" class="x" data-mv="1" data-k="${k}" aria-label="${LAB[k]} nach unten" ${i < order.length - 1 ? '' : 'disabled'}>↓</button></div>`).join('');
+}
+$('#sv').addEventListener('change', e => { if (!e.target.classList.contains('sc')) return; e.target.checked ? off.delete(e.target.value) : off.add(e.target.value); sv('off', [...off]); });
+$('#sv').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return; const s = S.services.find(x => x.id === b.dataset.id);
+  if (b.dataset.a === 'edit') openForm(s);
+  else if (b.dataset.a === 'idx') buildIndex(s).catch(e => { building = false; $('#info').textContent = 'Index-Fehler: ' + e.message; });
+  else if (b.dataset.a === 'exp') expIdx(s);
+  else if (confirm(s.name + ' entfernen?')) { S.services = S.services.filter(x => x.id !== s.id); save(); drawServices(); }
+});
+$('#addbtn').addEventListener('click', () => openForm(null));
+$('#t').addEventListener('change', typeUI); $('#cx').addEventListener('click', () => $('#dlg').close());
+$('#add').addEventListener('submit', e => {
+  e.preventDefault();
+  const o = {name: $('#n').value.trim(), type: $('#t').value, arg: $('#a').value.trim(), avail: $('#v').value, region: ($('#r').value || 'DE').toUpperCase(), stream_only: $('#so').checked, open: $('#o').value.trim()};
+  if (editId) S.services = S.services.map(s => s.id === editId ? {...s, ...o} : s);
+  else S.services.push({id: o.name.toLowerCase().replace(/\W+/g, '') + Date.now().toString(36), ...o});
+  save(); $('#dlg').close(); drawServices();
+});
+$('#cols').addEventListener('click', e => {
+  const b = e.target.closest('[data-mv]'); if (!b) return; const i = order.indexOf(b.dataset.k), j = i + +b.dataset.mv;
+  [order[i], order[j]] = [order[j], order[i]]; saveCols(); drawCols(); drawHead(); render();
+});
+$('#cols').addEventListener('change', e => {
+  const k = e.target.dataset.col; if (!k) return; e.target.checked ? hid.delete(k) : hid.add(k);
+  if (!vis().length) { hid.delete(k); e.target.checked = true; } saveCols(); drawHead(); render();
+});
+$('#key').value = S.key; $('#px').value = S.proxy;
+$('#key').addEventListener('input', e => { S.key = e.target.value.trim(); save(); });
+$('#px').addEventListener('input', e => { S.proxy = e.target.value.trim(); save(); });
+$('#ex').addEventListener('click', () => dlFile('filmsuche-dienste.json', JSON.stringify(S.services, null, 2), 'application/json'));
+$('#rs').addEventListener('click', () => { if (confirm('Alle eigenen Änderungen an den Diensten verwerfen?')) { S.services = structuredClone(DEF); save(); drawServices(); } });
+$('#im').addEventListener('change', async e => { try { S.services = JSON.parse(await e.target.files[0].text()); save(); drawServices(); } catch { alert('Die Datei ist keine gültige Dienste-Liste.'); } });
+
+$('#th').addEventListener('click', e => {
+  if (e.target.closest('.q')) return; const th = e.target.closest('th[data-k]'); if (!th) return; const k = th.dataset.k;
+  sort = {k, d: sort.k === k ? -sort.d : (k === 'score' ? -1 : 1)}; drawHead(); render();
+});
+$('#th').addEventListener('input', e => { const k = e.target.dataset.f; if (k === undefined) return; FV[k] = e.target.value; render(); });
+$('#th').addEventListener('change', e => { if (e.target.id === 'selall') { cur.forEach(x => e.target.checked ? sel.add(x.id) : sel.delete(x.id)); render(); } });
+$('#tb').addEventListener('change', e => { const id = +e.target.dataset.id; if (!id) return; e.target.checked ? sel.add(id) : sel.delete(id); render(); });
+$('#trb').addEventListener('click', () => { showTr = !showTr; render(); });
+$('#ecsv').addEventListener('click', () => exportAs('csv')); $('#ejson').addEventListener('click', () => exportAs('json'));
+$('#cands').addEventListener('click', e => { const id = e.target.dataset.id; if (id) go(raw0, id); });
+$('#f').addEventListener('submit', e => { e.preventDefault(); go($('#q').value.trim()); });
+$$('.av,#min,#hide,#sub,#gq,#unk,#grp').forEach(el => el.addEventListener('input', () => rows.length && render()));
+document.addEventListener('keydown', e => { if (e.key === '/' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); $('#q').focus(); } });
+$('#hist').innerHTML = ld('hist', []).map(x => `<option value="${esc(x)}">`).join('');
+// ---------- Spalten direkt in der Tabelle: ziehen, Menü; Zahnrad ----------
+let dragK = null;
+$('#th').addEventListener('dragstart', e => { const th = e.target.closest('th[data-col]'); if (!th) return; dragK = th.dataset.col; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragK); });
+$('#th').addEventListener('dragover', e => { if (dragK && e.target.closest('th[data-col]')) e.preventDefault(); });
+$('#th').addEventListener('drop', e => {
+  const th = e.target.closest('th[data-col]'); if (!th || !dragK || th.dataset.col === dragK) return; e.preventDefault();
+  order.splice(order.indexOf(dragK), 1); order.splice(order.indexOf(th.dataset.col), 0, dragK); dragK = null; saveCols(); drawCols(); drawHead(); render();
+});
+$('#colbtn').addEventListener('click', () => {
+  const p = $('#colpop'); p.hidden = !p.hidden; if (p.hidden) return;
+  const b = $('#colbtn').getBoundingClientRect(); p.style.left = Math.max(8, Math.min(b.left, innerWidth - p.offsetWidth - 12)) + 'px'; p.style.top = (b.bottom + 6) + 'px';
+});
+$('#colreset').addEventListener('click', () => { order = [...KEYS]; hid = new Set(); saveCols(); drawCols(); drawHead(); render(); });
+$('#gear').addEventListener('click', () => $('#setdlg').showModal()); $('#setx').addEventListener('click', () => $('#setdlg').close());
+// ---------- Zugang mit Passwort: verschlüsselte Datei im Repository ----------
+const TE = new TextEncoder(), TD = new TextDecoder();
+const b64 = u => btoa(String.fromCharCode(...u)), ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function dKey(pw, salt) {
+  const m = await crypto.subtle.importKey('raw', TE.encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256'}, m, {name: 'AES-GCM', length: 256}, false, ['encrypt', 'decrypt']);
+}
+async function lockSecrets(pw) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), k = await dKey(pw, salt);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-GCM', iv}, k, TE.encode(JSON.stringify({key: S.key, proxy: S.proxy}))));
+  return JSON.stringify({v: 1, salt: b64(salt), iv: b64(iv), data: b64(ct)});
+}
+async function unlockSecrets(pw, f) {
+  const k = await dKey(pw, ub64(f.salt));
+  return JSON.parse(TD.decode(await crypto.subtle.decrypt({name: 'AES-GCM', iv: ub64(f.iv)}, k, ub64(f.data))));
+}
+async function applySecrets(pw) {
+  const r = await fetch('secrets.enc.json', {cache: 'no-store'}); if (!r.ok) throw new Error('Die Datei secrets.enc.json liegt nicht im Repository.');
+  let d; try { d = await unlockSecrets(pw, await r.json()); } catch (e) { throw e.name === 'OperationError' ? new Error('Passwort falsch.') : e; }
+  S.key = d.key || ''; S.proxy = d.proxy || ''; save(); $('#key').value = S.key; $('#px').value = S.proxy;
+}
+$('#lock').addEventListener('click', async () => {
+  const pw = $('#pw').value;
+  if (pw.length < 10) return alert('Bitte ein Passwort mit mindestens 10 Zeichen wählen, am besten mehrere zufällige Wörter.');
+  if (!S.key && !S.proxy) return alert('Trage zuerst TMDB-Key und/oder Proxy-URL ein.');
+  dlFile('secrets.enc.json', await lockSecrets(pw), 'application/json');
+  alert('Fertig. Lege die heruntergeladene Datei secrets.enc.json in dein Repository, neben index.html.');
+});
+$('#unlock').addEventListener('click', async () => { try { await applySecrets($('#pw').value); alert('Zugangsdaten geladen.'); } catch (e) { alert(e.message); } });
+$('#pwf').addEventListener('submit', async e => {
+  e.preventDefault();
+  try { await applySecrets($('#pw2').value); $('#pwdlg').close(); $('#info').textContent = 'Zugangsdaten geladen, du kannst suchen.'; } catch (err) { $('#pwmsg').textContent = err.message; }
+});
+$('#pwx').addEventListener('click', () => $('#pwdlg').close());
+if (!S.key && !S.proxy) fetch('secrets.enc.json', {cache: 'no-store'}).then(r => r.ok && $('#pwdlg').showModal()).catch(() => {});
+const applyTex = v => { if (v === 'soft') delete document.documentElement.dataset.tex; else document.documentElement.dataset.tex = v; };
+$('#tex').value = ld('tex', 'soft'); applyTex($('#tex').value);
+$('#tex').addEventListener('change', e => { sv('tex', e.target.value); applyTex(e.target.value); });
+drawServices(); drawCols(); drawHead(); typeUI();
+const hm = location.hash.match(/q=([^&]+)/); if (hm) { $('#q').value = decodeURIComponent(hm[1]); go($('#q').value); }
+</script>
+</body>
+</html>
