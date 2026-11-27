@@ -68,20 +68,38 @@ tr.sub td[data-c=title]{padding-left:28px;color:var(--mut)}
 dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--fg);width:min(420px,92vw);padding:18px}
 dialog::backdrop{background:rgba(0,0,0,.4)}dialog h3{margin:0 0 8px}
 @media(max-width:800px){body{grid-template-columns:1fr;height:auto}main{height:auto;overflow:visible}aside{border-right:0;border-bottom:1px solid var(--line)}}
+
+/* ---- Texturen ---- */
+:root{--hole:color-mix(in srgb,var(--fg) 10%,transparent);--ta:9%;--holes:repeating-linear-gradient(90deg,var(--hole) 0 10px,transparent 10px 22px);--topo:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360' fill='none' stroke='%23000' stroke-opacity='.08'%3E%3Cpath d='M0 70C90 20 270 120 360 70'/%3E%3Cpath d='M0 100C90 50 270 150 360 100'/%3E%3Cpath d='M0 130C90 80 270 180 360 130'/%3E%3Cpath d='M0 250C90 200 270 300 360 250'/%3E%3Cpath d='M0 280C90 230 270 330 360 280'/%3E%3Cpath d='M0 310C90 260 270 360 360 310'/%3E%3Ccircle cx='290' cy='180' r='22'/%3E%3Ccircle cx='290' cy='180' r='36'/%3E%3Ccircle cx='290' cy='180' r='50'/%3E%3C/svg%3E");--grain2:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E")}
+@media(prefers-color-scheme:dark){:root{--topo:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360' fill='none' stroke='%23fff' stroke-opacity='.07'%3E%3Cpath d='M0 70C90 20 270 120 360 70'/%3E%3Cpath d='M0 100C90 50 270 150 360 100'/%3E%3Cpath d='M0 130C90 80 270 180 360 130'/%3E%3Cpath d='M0 250C90 200 270 300 360 250'/%3E%3Cpath d='M0 280C90 230 270 330 360 280'/%3E%3Cpath d='M0 310C90 260 270 360 360 310'/%3E%3Ccircle cx='290' cy='180' r='22'/%3E%3Ccircle cx='290' cy='180' r='36'/%3E%3Ccircle cx='290' cy='180' r='50'/%3E%3C/svg%3E")}}
+html[data-tex=strong]{--ta:20%}
+html[data-tex=off] *{background-image:none!important}
+aside{background-image:var(--topo),var(--grain)}
+main{background-image:var(--grain2)}
+.card.p1>summary{background-image:repeating-linear-gradient(135deg,color-mix(in srgb,var(--cc) var(--ta),transparent) 0 1px,transparent 1px 7px)}
+.card.p2>summary{background-image:linear-gradient(color-mix(in srgb,var(--cc) var(--ta),transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--cc) var(--ta),transparent) 1px,transparent 1px);background-size:9px 9px}
+.card.p3>summary{background-image:repeating-conic-gradient(color-mix(in srgb,var(--cc) var(--ta),transparent) 0 25%,transparent 0 50%);background-size:10px 10px}
+.card.p4>summary{background-image:linear-gradient(135deg,color-mix(in srgb,var(--cc) var(--ta),transparent) 25%,transparent 25%) -5px 0/10px 10px,linear-gradient(225deg,color-mix(in srgb,var(--cc) var(--ta),transparent) 25%,transparent 25%) -5px 0/10px 10px,linear-gradient(315deg,color-mix(in srgb,var(--cc) var(--ta),transparent) 25%,transparent 25%),linear-gradient(45deg,color-mix(in srgb,var(--cc) var(--ta),transparent) 25%,transparent 25%)}
+.card.p5>summary{background-image:repeating-linear-gradient(45deg,color-mix(in srgb,var(--cc) var(--ta),transparent) 0 1px,transparent 1px 6px),repeating-linear-gradient(-45deg,color-mix(in srgb,var(--cc) var(--ta),transparent) 0 1px,transparent 1px 6px)}
+form.top{padding:20px 16px;background-image:var(--holes),var(--holes),radial-gradient(var(--dot) 1px,transparent 1px);background-size:100% 8px,100% 8px,14px 14px;background-position:0 5px,0 calc(100% - 5px),0 0;background-repeat:repeat-x,repeat-x,repeat}
+.tools{background-image:repeating-linear-gradient(-45deg,color-mix(in srgb,var(--c1) var(--ta),transparent) 0 1px,transparent 1px 8px)}
+#cw{background-image:repeating-conic-gradient(from 0deg at 0 50%,color-mix(in srgb,var(--c3) var(--ta),transparent) 0 3deg,transparent 3deg 7deg)}
+#sw{background-image:radial-gradient(color-mix(in srgb,var(--c1) 22%,transparent) 1px,transparent 1.5px);background-size:10px 10px}
+dialog{background-image:repeating-conic-gradient(from 0deg at 100% 0,color-mix(in srgb,var(--c1) var(--ta),transparent) 0 5deg,transparent 5deg 10deg);background-size:100% 110px;background-repeat:no-repeat}
 </style>
 </head>
 <body>
 <aside>
-  <details class="card" style="--cc:var(--c1)" open><summary>Dienste</summary><div class="body">
+  <details class="card p1" style="--cc:var(--c1)" open><summary>Dienste</summary><div class="body">
     <button type="button" class="wide" id="addbtn">+ Dienst hinzufügen</button>
     <div id="sv"></div>
   </div></details>
-  <details class="card" style="--cc:var(--c2)" open><summary>Verfügbarkeit</summary><div class="body">
+  <details class="card p2" style="--cc:var(--c2)" open><summary>Verfügbarkeit</summary><div class="body">
     <label><input type="checkbox" class="av" value="stream" checked><span class="tag av-stream">Stream</span> sofort ansehbar</label>
     <label><input type="checkbox" class="av" value="miete" checked><span class="tag av-miete">Miete/Kauf</span> online</label>
     <label><input type="checkbox" class="av" value="bibliothek" checked><span class="tag av-bibliothek">Bibliothek</span> ausleihbar</label>
   </div></details>
-  <details class="card" style="--cc:var(--c3)" open><summary>Treffer eingrenzen<button type="button" class="q" data-help="filter" aria-label="Hilfe zu den Filtern">?</button></summary><div class="body">
+  <details class="card p3" style="--cc:var(--c3)" open><summary>Treffer eingrenzen<button type="button" class="q" data-help="filter" aria-label="Hilfe zu den Filtern">?</button></summary><div class="body">
     <input id="gq" placeholder="In allen Spalten suchen">
     <label><input type="checkbox" id="unk" checked>Unbekannte Werte zeigen</label>
     <label><input type="checkbox" id="grp" checked>Gleiche Filme zusammenfassen</label>
@@ -91,13 +109,19 @@ dialog::backdrop{background:rgba(0,0,0,.4)}dialog h3{margin:0 0 8px}
       <label><input type="checkbox" id="hide">Kürzere Treffer ausblenden</label>
     </div>
   </div></details>
-  <details class="card" style="--cc:var(--c4)"><summary>Spalten</summary><div class="body">
+  <details class="card p4" style="--cc:var(--c4)"><summary>Spalten</summary><div class="body">
     <div class="m">Häkchen blendet eine Spalte ein oder aus, die Pfeile ändern die Reihenfolge.</div><div id="cols"></div>
   </div></details>
-  <details class="card" style="--cc:var(--c5)"><summary>Einstellungen</summary><div class="body">
+  <details class="card p5" style="--cc:var(--c5)"><summary>Einstellungen</summary><div class="body">
     <label for="key">TMDB-API-Key (bleibt nur in diesem Browser)</label><input id="key" type="password" autocomplete="off">
     <label for="px">Proxy-URL (Cloudflare Worker)</label><input id="px" placeholder="https://…workers.dev">
-    <button type="button" class="ghost" id="ex">Dienste exportieren</button>
+    <div class="group"><b>Zugang mit Passwort</b>
+      <div class="m">Verschlüsselt TMDB-Key und Proxy-URL in einer Datei. Liegt sie im Repository, genügt auf jedem Gerät das Passwort.</div>
+      <input id="pw" type="password" placeholder="Passwort (lang, nur dafür benutzt)" autocomplete="new-password">
+      <button type="button" class="ghost" id="lock">Verschlüsselt speichern</button> <button type="button" class="ghost" id="unlock">Mit Passwort laden</button>
+    </div>
+    <label for="tex">Texturen</label><select id="tex"><option value="soft">Dezent</option><option value="strong">Kräftig</option><option value="off">Aus</option></select>
+    <button type="button" class="ghost" id="ex" style="margin-top:8px">Dienste exportieren</button>
     <label class="m">Dienste importieren<input id="im" type="file" accept=".json"></label>
     <button type="button" class="ghost" id="rs">Standarddienste wiederherstellen</button>
   </div></details>
@@ -137,6 +161,10 @@ dialog::backdrop{background:rgba(0,0,0,.4)}dialog h3{margin:0 0 8px}
     <div style="margin-top:10px"><button>Speichern</button> <button type="button" class="ghost" id="cx">Abbrechen</button></div>
   </form>
 </dialog>
+<dialog id="pwdlg"><h3>Zugangsdaten entsperren</h3>
+  <form id="pwf"><div class="m">Im Repository liegt eine verschlüsselte Datei mit TMDB-Key und Proxy-URL. Gib dein Passwort ein.</div>
+    <input id="pw2" type="password" autocomplete="current-password" aria-label="Passwort" required><div class="m" id="pwmsg" style="color:var(--err)"></div>
+    <div style="margin-top:10px"><button>Entsperren</button> <button type="button" class="ghost" id="pwx">Später</button></div></form></dialog>
 <div id="pop" class="pop" hidden></div>
 <script>
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
@@ -364,7 +392,7 @@ async function go(raw, pick) {
   raw0 = raw; pickId = pick || null;
   const extra = [['ad', 'regie'], ['ay', 'jahr'], ['ac', 'land']].map(([i, k]) => $('#' + i).value.trim() ? `${k}:"${$('#' + i).value.trim()}"` : '').join(' ');
   const {text, F} = parseQ(raw + ' ' + extra); if (!text) return;
-  const ids = $$('.sc:checked').map(x => x.value), sel = S.services.filter(s => ids.includes(s.id));
+  const ids = $$('.sc:checked').map(x => x.value), chosen = S.services.filter(s => ids.includes(s.id));
   if (!ids.length) { $('#info').textContent = 'Wähle mindestens einen Dienst aus.'; return; }
   const my = ++runId; rows = []; cands = []; stat = {}; sel.clear(); Fq = F; lastQ = text; errs = '';
   history.replaceState(null, '', '#q=' + encodeURIComponent(raw));
@@ -382,11 +410,11 @@ async function go(raw, pick) {
   if (my !== runId) return; drawCands(c);
   if (c.pick) tj('/movie/' + c.pick.id + '/videos', '&include_video_language=de,en,null').then(v => my === runId && add({name: 'TMDB-Trailer', avail: 'stream', type: 'tmdb'},
     v.results.filter(x => x.site === 'YouTube' && /Trailer|Teaser/.test(x.type)).slice(0, 3).map(x => ({title: c.pick.title + ' – ' + x.name, url: 'https://www.youtube.com/watch?v=' + x.key, year: c.pick.year, trailer: true})), c)).catch(() => {});
-  sel.forEach(async s => {
+  chosen.forEach(async s => {
     stat[s.id] = {s, st: 'run'}; drawStat();
     try { const out = await A[s.type](s, c); if (my !== runId) return; add(s, out, c); stat[s.id] = {s, st: 'ok', n: out.length}; }
     catch (e) { if (my !== runId) return; stat[s.id] = {s, st: 'err', msg: e.message}; }
-    drawStat();
+    drawStat(); render();
   });
 }
 function add(s, out, c) {
@@ -575,6 +603,44 @@ $('#f').addEventListener('submit', e => { e.preventDefault(); go($('#q').value.t
 $$('.av,#min,#hide,#sub,#gq,#unk,#grp').forEach(el => el.addEventListener('input', () => rows.length && render()));
 document.addEventListener('keydown', e => { if (e.key === '/' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); $('#q').focus(); } });
 $('#hist').innerHTML = ld('hist', []).map(x => `<option value="${esc(x)}">`).join('');
+// ---------- Zugang mit Passwort: verschlüsselte Datei im Repository ----------
+const TE = new TextEncoder(), TD = new TextDecoder();
+const b64 = u => btoa(String.fromCharCode(...u)), ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function dKey(pw, salt) {
+  const m = await crypto.subtle.importKey('raw', TE.encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256'}, m, {name: 'AES-GCM', length: 256}, false, ['encrypt', 'decrypt']);
+}
+async function lockSecrets(pw) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), k = await dKey(pw, salt);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-GCM', iv}, k, TE.encode(JSON.stringify({key: S.key, proxy: S.proxy}))));
+  return JSON.stringify({v: 1, salt: b64(salt), iv: b64(iv), data: b64(ct)});
+}
+async function unlockSecrets(pw, f) {
+  const k = await dKey(pw, ub64(f.salt));
+  return JSON.parse(TD.decode(await crypto.subtle.decrypt({name: 'AES-GCM', iv: ub64(f.iv)}, k, ub64(f.data))));
+}
+async function applySecrets(pw) {
+  const r = await fetch('secrets.enc.json', {cache: 'no-store'}); if (!r.ok) throw new Error('Die Datei secrets.enc.json liegt nicht im Repository.');
+  let d; try { d = await unlockSecrets(pw, await r.json()); } catch (e) { throw e.name === 'OperationError' ? new Error('Passwort falsch.') : e; }
+  S.key = d.key || ''; S.proxy = d.proxy || ''; save(); $('#key').value = S.key; $('#px').value = S.proxy;
+}
+$('#lock').addEventListener('click', async () => {
+  const pw = $('#pw').value;
+  if (pw.length < 10) return alert('Bitte ein Passwort mit mindestens 10 Zeichen wählen, am besten mehrere zufällige Wörter.');
+  if (!S.key && !S.proxy) return alert('Trage zuerst TMDB-Key und/oder Proxy-URL ein.');
+  dlFile('secrets.enc.json', await lockSecrets(pw), 'application/json');
+  alert('Fertig. Lege die heruntergeladene Datei secrets.enc.json in dein Repository, neben index.html.');
+});
+$('#unlock').addEventListener('click', async () => { try { await applySecrets($('#pw').value); alert('Zugangsdaten geladen.'); } catch (e) { alert(e.message); } });
+$('#pwf').addEventListener('submit', async e => {
+  e.preventDefault();
+  try { await applySecrets($('#pw2').value); $('#pwdlg').close(); $('#info').textContent = 'Zugangsdaten geladen, du kannst suchen.'; } catch (err) { $('#pwmsg').textContent = err.message; }
+});
+$('#pwx').addEventListener('click', () => $('#pwdlg').close());
+if (!S.key && !S.proxy) fetch('secrets.enc.json', {cache: 'no-store'}).then(r => r.ok && $('#pwdlg').showModal()).catch(() => {});
+const applyTex = v => { if (v === 'soft') delete document.documentElement.dataset.tex; else document.documentElement.dataset.tex = v; };
+$('#tex').value = ld('tex', 'soft'); applyTex($('#tex').value);
+$('#tex').addEventListener('change', e => { sv('tex', e.target.value); applyTex(e.target.value); });
 drawServices(); drawCols(); drawHead(); typeUI();
 const hm = location.hash.match(/q=([^&]+)/); if (hm) { $('#q').value = decodeURIComponent(hm[1]); go($('#q').value); }
 </script>
