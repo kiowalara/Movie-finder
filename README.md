@@ -81,3 +81,7 @@ Die Menünamen bei Cloudflare ändern sich gelegentlich. Der Weg bleibt aber gle
 - **Datenschutz:** Key, Proxy, Dienste und Spalten liegen nur in deinem Browser. Die Seite hat keinen eigenen Server.
 - **Fairness:** Nutze die Seite für den persönlichen Gebrauch und lass Seiten wie UbuWeb nicht mit Anfragen überrollen.
 - Diese Seite nutzt die TMDB-API, wird aber von TMDB weder unterstützt noch zertifiziert. Verfügbarkeitsdaten stammen über TMDB von JustWatch.
+
+## tbd
+- Suche optimieren
+- Dienste hinzufügen: uA https://instr.iastate.libguides.com/c.php?g=49512&p=318829
